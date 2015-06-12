@@ -1,0 +1,28 @@
+#! /usr/bin/env python
+from __future__ import print_function
+import ucdcompiler
+import sys
+import re
+
+def usage():
+   print("""usage: ucdc <version> <ucd-path> <unicode-x.y.z.ucd>
+
+Generates the binary Unicode Database file unicode-x.y.z.ucd from the data at
+ucd-path, which should contain UCD.zip.
+
+You do not need to unzip the UCD zip file before running this program.""",
+         file=sys.stderr);
+
+if len(sys.argv) != 4:
+    usage()
+    exit(1)
+    
+m = re.match(r'(\d+)\.(\d+)\.(\d+)', sys.argv[1])
+
+if not m:
+    usage()
+    exit(1)
+
+version = tuple([int(x) for x in m.groups()])
+
+ucdcompiler.build_data(version, sys.argv[2], sys.argv[3])
