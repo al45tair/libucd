@@ -1,0 +1,9 @@
+syntax: glob
+
+.sconsign.dblite
+*.o
+*.os
+*.pyc
+*~
+ucd/*
+lib/*
