@@ -1,9 +1,11 @@
 syntax: glob
 
+.DS_Store
 .sconsign.dblite
 *.o
 *.os
 *.pyc
 *~
+xcuserdata
 ucd/*
 lib/*

@@ -591,7 +591,8 @@ database::codepoint_from_name(const std::string &name,
     }
   } else if (::strncasecmp(cname, "HANGUL SYLLABLE ", 16) == 0) {
     const char *ptr = cname + 16;
-    unsigned LIndex = LCount, VIndex = VCount, TIndex = 0, match_len;
+    unsigned LIndex = LCount, VIndex = VCount, TIndex = 0;
+    size_t match_len;
 
     match_len = 0;
     for (unsigned n = 0; n < LCount; ++n) {
@@ -1416,7 +1417,7 @@ database::block(codepoint cp) const
   if (!_pimpl->blocks.size())
     _pimpl->init_blocks();
 
-  unsigned min = 0, max = _pimpl->blocks.size(), mid;
+  unsigned min = 0, max = (unsigned)_pimpl->blocks.size(), mid;
 
   while (min < max) {
     mid = (min + max) / 2;
