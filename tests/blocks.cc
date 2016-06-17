@@ -18,7 +18,7 @@ TEST_CASE("we can look up blocks", "[blocks]") {
     REQUIRE(db.block('A')->name() == "Basic Latin");
     REQUIRE(db.block(0x1f600)->name() == "Emoticons");
     REQUIRE(db.block(0x20a3)->name() == "Currency Symbols");
-    REQUIRE(db.block(0xe0082) == NULL);
+    REQUIRE(db.block(0xe0082) == nullptr);
   }
 
   SECTION("getting a block from its name") {
@@ -26,6 +26,6 @@ TEST_CASE("we can look up blocks", "[blocks]") {
     REQUIRE(db.block_from_name("basic latin")->name() == "Basic Latin");
     REQUIRE(db.block_from_name("ARABIC PRESENTATION FORMS-B")->name()
             == "Arabic Presentation Forms-B");
-    REQUIRE(db.block_from_name("<nonexistent block>") == NULL);
+    REQUIRE(db.block_from_name("<nonexistent block>") == nullptr);
   }
 }

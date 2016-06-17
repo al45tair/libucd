@@ -48,7 +48,8 @@ static const char *jongseong[TCount] = {
 struct database::impl {
   int                       fd;
   off_t                     len;
-
+  bool                      mapped;
+  
   const struct ucd_header  *pheader;
   const struct ucd_strings *pstrings;
   const struct ucd_names   *pnames;
@@ -134,7 +135,7 @@ database::impl::~impl()
 {
   if (fd >= 0)
     ::close(fd);
-  if (pheader)
+  if (pheader && mapped)
     ::munmap((void *)pheader, len);
 }
 
@@ -148,7 +149,7 @@ database::impl::get_table(uint32_t table_id) const
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 const char *
@@ -524,13 +525,14 @@ database::open(const char *filename)
   if (_pimpl->len < 0)
     throw std::system_error(errno, std::system_category());
 
-  _pimpl->pheader = (struct ucd_header *)::mmap(NULL,
+  _pimpl->pheader = (struct ucd_header *)::mmap(nullptr,
                                                 _pimpl->len,
                                                 PROT_READ,
                                                 MAP_FILE|MAP_SHARED,
                                                 _pimpl->fd,
                                                 0);
-
+  _pimpl->mapped = true;
+  
   const struct ucd_header *phead = _pimpl->pheader;
 
   if (!phead)
@@ -543,10 +545,27 @@ database::open(const char *filename)
     throw bad_data_file("too many tables in UCD database");
 }
 
+database::database(const void *base, size_t length)
+{
+  _pimpl = std::unique_ptr<impl>(new database::impl());
+  _pimpl->fd = -1;
+  _pimpl->len = length;
+  _pimpl->pheader = (struct ucd_header *)base;
+  _pimpl->mapped = false;
+  
+  const struct ucd_header *phead = _pimpl->pheader;
+  
+  if (phead->magic != UCD_MAGIC)
+    throw bad_data_file("not a UCD database");
+  
+  if (phead->num_tables > UCD_MAX_TABLES)
+    throw bad_data_file("too many tables in UCD database");
+}
+
 void
 database::close()
 {
-  _pimpl = NULL;
+  _pimpl = nullptr;
 }
 
 database::~database()
@@ -1058,7 +1077,7 @@ find_case_range(const struct ucd_case *pcase, codepoint cp)
       return &range;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 static size_t
@@ -1156,7 +1175,7 @@ case_mapping(const struct ucd_case *pcase,
   case UCD_CASE_RANGE_EXTERNAL:
     {
       uint16_t *ptr = (uint16_t *)((uint8_t *)pcase + range->ext_offset);
-      return utf16_expand(ptr, NULL, out, out_len);
+      return utf16_expand(ptr, nullptr, out, out_len);
     }
   case UCD_CASE_RANGE_TABLE:
     {
@@ -1191,7 +1210,7 @@ case_mapping(const struct ucd_case *pcase,
       {
         uint16_t *ptr = (uint16_t *)((uint8_t *)pcase 
                                      + range->sf_external.full_offset);
-        return utf16_expand(ptr, NULL, out, out_len);
+        return utf16_expand(ptr, nullptr, out, out_len);
       }
     case MappingType::Simple:
       if (out && out_len >= 1)
@@ -1325,7 +1344,7 @@ case_mapping(const struct ucd_case *pcase,
   case UCD_CASE_RANGE_EXTERNAL:
     {
       uint16_t *ptr = (uint16_t *)((uint8_t *)pcase + range->ext_offset);
-      utf16_expand(result, ptr, NULL);
+      utf16_expand(result, ptr, nullptr);
     }
     break;
   case UCD_CASE_RANGE_TABLE:
@@ -1359,7 +1378,7 @@ case_mapping(const struct ucd_case *pcase,
       {
         uint16_t *ptr = (uint16_t *)((uint8_t *)pcase 
                                      + range->sf_external.full_offset);
-        utf16_expand(result, ptr, NULL);
+        utf16_expand(result, ptr, nullptr);
       }
       break;
     case MappingType::Simple:
@@ -1433,7 +1452,7 @@ database::block(codepoint cp) const
       return &_pimpl->blocks[mid];
   }
 
-  return NULL;
+  return nullptr;
 }
 
 const std::vector<block> &
@@ -1458,7 +1477,7 @@ database::block_from_name(const std::string &name) const
       return &*i;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 nt
@@ -1631,7 +1650,7 @@ database::decomposition_mapping(codepoint cp,
       case UCD_DECO_ENTRY_EXTERNAL:
         {
           uint16_t *putf16 = (uint16_t *)((uint8_t *)pdeco + entry.ext_offset);
-          return utf16_expand(putf16, NULL, out, out_len);
+          return utf16_expand(putf16, nullptr, out, out_len);
         }
       default:
         if (out_len >= 1)
@@ -1705,7 +1724,7 @@ database::decomposition_mapping(codepoint cp, dt &dtype) const
       case UCD_DECO_ENTRY_EXTERNAL:
         {
           uint16_t *putf16 = (uint16_t *)((uint8_t *)pdeco + entry.ext_offset);
-          utf16_expand(result, putf16, NULL);
+          utf16_expand(result, putf16, nullptr);
         }
         break;
       default:

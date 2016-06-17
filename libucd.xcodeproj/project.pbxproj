@@ -590,6 +590,7 @@
 				D3054C911B39793800D508B2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		D3054CC71B397C1600D508B2 /* Build configuration list for PBXAggregateTarget "Unicode Data" */ = {
 			isa = XCConfigurationList;
@@ -598,6 +599,7 @@
 				D3054CC91B397C1600D508B2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
