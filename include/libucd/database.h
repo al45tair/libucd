@@ -28,6 +28,7 @@ namespace ucd {
   public:
     database();
     database(const char *filename);
+    database(const void *base, size_t length);
     ~database();
 
     void open(const char *filename);
