@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can inspect Age properties", "[age]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.age('A') == version(1, 1));
   REQUIRE(db.age(0x0fb9) == version(2, 0));

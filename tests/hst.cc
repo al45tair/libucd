@@ -5,7 +5,7 @@ TEST_CASE("we can get Hangul syllable types", "[hst]") {
   ucd::database db;
   using ucd::Hangul_Syllable_Type;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.hangul_syllable_type('A') == Hangul_Syllable_Type::NA);
   REQUIRE(db.hangul_syllable_type(0x1123) == Hangul_Syllable_Type::L);

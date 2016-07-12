@@ -879,6 +879,11 @@ namespace ucd {
     Zain = 84,
     Zhain = 85,
 
+    // Unicode 9
+    African_Feh = 86,
+    African_Qaf = 87,
+    African_Noon = 88,
+
     // Aliases
     Hamza_On_Heh_Goal = Teh_Marbuta_Goal,
   };
@@ -929,6 +934,11 @@ namespace ucd {
     CJ = 38,
     RI = 39,
 
+    // Unicode 9
+    ZWJ = 40,
+    EB = 41,
+    EM = 42,
+
     // Aliases
     Ambiguous = AI,
     Alphabetic = AL,
@@ -965,7 +975,8 @@ namespace ucd {
     Break_Symbols = SY,
     Word_Joiner = WJ,
     Unknown = XX,
-    ZWSpace = ZW
+    ZWSpace = ZW,
+    Zero_Width_Joiner = ZWJ,
   };
 
   enum class Grapheme_Cluster_Break {
@@ -984,6 +995,13 @@ namespace ucd {
     T = 11,
     V = 12,
 
+    // Unicode 9
+    EB = 13,
+    EM = 14,
+    GAZ = 15,
+    EBG = 16,
+    ZWJ = 17,
+
     // Aliases
     Control = CN,
     Extend = EX,
@@ -991,6 +1009,10 @@ namespace ucd {
     Regional_Indicator = RI,
     SpacingMark = SM,
     Other = XX,
+    E_Base = EB,
+    E_Modifier = EM,
+    Glue_After_Zwj = GAZ,
+    E_Base_GAZ = EBG,
   };
 
   enum class Sentence_Break {
@@ -1047,6 +1069,13 @@ namespace ucd {
     RI = 15,
     SQ = 16,
 
+    // Unicode 9
+    EB = 17,
+    EM = 18,
+    GAZ = 19,
+    EBG = 20,
+    ZWJ = 21,
+
     // Aliases
     Double_Quote = DQ,
     ExtendNumLet = EX,
@@ -1062,6 +1091,10 @@ namespace ucd {
     Regional_Indicator = RI,
     Single_Quote = SQ,
     Other = XX,
+    E_Base = EB,
+    E_Modifier = EM,
+    Glue_After_Zwj = GAZ,
+    E_Base_GAZ = EBG,
   };
 
   enum class East_Asian_Width {
@@ -1081,7 +1114,7 @@ namespace ucd {
     Wide = W
   };
 
-  enum class Indic_Matra_Category {
+  enum class Indic_Positional_Category {
     NA = 0,
     Bottom = 1,
     Bottom_And_Right = 2,
@@ -1097,6 +1130,9 @@ namespace ucd {
     Top_And_Right = 12,
     Visual_Order_Left = 13
   };
+
+  // Renamed in Unicode 8
+  typedef Indic_Positional_Category Indic_Matra_Category;
 
   enum class Indic_Syllabic_Category {
     Other = 0,
@@ -1129,10 +1165,17 @@ namespace ucd {
     Visarga = 27,
     Vowel = 28,
     Vowel_Dependent = 29,
-    Vowel_Independent = 30
+    Vowel_Independent = 30,
+
+    // Unicode 8
+    Consonant_Prefixed = 31,
+    Consonant_With_Stacker = 32,
+    Consonant_Killer = 33,
+    Syllable_Modifier = 34,
   };
 
   typedef Indic_Matra_Category InMC;
+  typedef Indic_Positional_Category InPC;
   typedef Indic_Syllabic_Category InSC;
   typedef East_Asian_Width ea;
   typedef Word_Break WB;

@@ -7,7 +7,7 @@ TEST_CASE("we can get Decomposition_Type and Decomposition_Mapping values",
           "[deco]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   SECTION("Decomposition_Type") {
     REQUIRE(db.decomposition_type('a') == Decomposition_Type::None);

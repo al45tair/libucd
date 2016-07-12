@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can get General_Category values", "[gc]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.general_category('X') == General_Category::Lu);
   REQUIRE(db.general_category('q') == General_Category::Ll);

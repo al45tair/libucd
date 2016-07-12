@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can get Bidi_Class values", "[bc]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.bidi_class('\t') == Bidi_Class::S);
   REQUIRE(db.bidi_class('!') == Bidi_Class::ON);
@@ -36,7 +36,7 @@ TEST_CASE("we can get Bidi_Class values", "[bc]") {
 TEST_CASE("we can check the Bidi_Mirrored property", "[bidi-mirrored]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.bidi_mirrored('(') == true);
   REQUIRE(db.bidi_mirrored('A') == false);
@@ -47,7 +47,7 @@ TEST_CASE("we can check the Bidi_Mirrored property", "[bidi-mirrored]") {
 TEST_CASE("we can obtain the Bidi_Mirroring_Glyph property", "[bidi-mglyph]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.bidi_mirroring_glyph('(') == codepoint(')'));
   REQUIRE(db.bidi_mirroring_glyph(')') == codepoint('('));
@@ -60,7 +60,7 @@ TEST_CASE("we can obtain the Bidi_Mirroring_Glyph property", "[bidi-mglyph]") {
 TEST_CASE("we can read the Bidi_Paired_Bracket property", "[bidi-brak]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   bpt type;
 

@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can get Indic category values", "[indic]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   SECTION("Indic_Matra_Category") {
     REQUIRE(db.indic_matra_category('A') == Indic_Matra_Category::NA);

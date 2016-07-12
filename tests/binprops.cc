@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("check that various binary properties work", "[binprops]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
   
   /* This is far from an exhaustive test (there are *lots* of binary properties)
      but since they share the same implementation it's a reasonable assumption

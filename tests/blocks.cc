@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can look up blocks", "[blocks]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   SECTION("enumerating blocks") {
     for (auto i = db.blocks().begin(); i != db.blocks().end(); ++i) {

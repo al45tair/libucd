@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can get East_Asian_Width values", "[eaw]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.east_asian_width(0x0d) == East_Asian_Width::N);
   REQUIRE(db.east_asian_width(' ') == East_Asian_Width::Na);

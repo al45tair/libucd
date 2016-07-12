@@ -93,7 +93,7 @@ binprop_tables = [
     ('Quotation_Mark', 'QMa?'),
     ('Radical', 'Rad?'),
     ('Soft_Dotted', 'SDt?'),
-    ('STerm', 'Stm?'),
+    (('STerm', 'Sentence_Terminal'), 'Stm?'),
     ('Terminal_Punctuation', 'TPu?'),
     ('Unified_Ideograph', 'UId?'),
     ('Variation_Selector', 'VSl?'),
@@ -287,6 +287,11 @@ joining_group_map = {
     "Yudh_He": 83,
     "Zain": 84,
     "Zhain": 85,
+
+    # Unicode 9
+    "African_Feh": 86,
+    "African_Qaf": 87,
+    "African_Noon": 88,
 }
 
 lbreak_map = {
@@ -331,7 +336,12 @@ lbreak_map = {
     "B2": 36,
     "HL": 37,
     "CJ": 38,
-    "RI": 39,    
+    "RI": 39,
+
+    # Unicode 9
+    "ZWJ": 40,
+    "EB": 41,
+    "EM": 42,
 }
 
 # N.B. We DELIBERATELY map LV to LVT here, which dramatically reduces the size
@@ -350,7 +360,14 @@ gbreak_map = {
     "RI": 9, "Regional_Indicator": 9,
     "SM": 10, "SpacingMark": 10,
     "T": 11,
-    "V": 12
+    "V": 12,
+
+    # Unicode 9
+    "EB": 13, "E_Base": 13,
+    "EM": 14, "E_Modifier": 14,
+    "GAZ": 15, "Glue_After_Zwj": 15,
+    "EBG": 16, "E_Base_GAZ": 16,
+    "ZWJ": 17,
 }
 
 sbreak_map = {
@@ -389,6 +406,13 @@ wbreak_map = {
     'NU': 14, 'Numeric': 14,
     'RI': 15, 'Regional_Indicator': 15,
     'SQ': 16, 'Single_Quote': 16,
+
+    # Unicode 9
+    "EB": 17, "E_Base": 17,
+    "EM": 18, "E_Modifier": 18,
+    "GAZ": 19, "Glue_After_Zwj": 19,
+    "EBG": 20, "E_Base_GAZ": 20,
+    "ZWJ": 21,
 }
 
 eaw_map = {
@@ -448,7 +472,13 @@ insc_map = {
     'Visarga': 27,
     'Vowel': 28,
     'Vowel_Dependent': 29,
-    'Vowel_Independent': 30
+    'Vowel_Independent': 30,
+
+    # Unicode 8
+    'Consonant_Prefixed': 31,
+    'Consonant_With_Stacker': 32,
+    'Consonant_Killer': 33,
+    'Syllable_Modifier': 34,
 }
     
 def gen_name_table(forward, reverse, special_ranges):
@@ -1277,7 +1307,7 @@ def gen_rs_table(radstroke):
                                   dofs))
         dofs += len(mapped) * 2
         entries.append(b''.join([struct.pack(b'=BB',
-                                             r, a | flag(s))
+                                             r, (a & 0x7f) | flag(s))
                                              for r, s, a
                                              in mapped]))
     return b''.join([struct.pack(b'=I', num_ranges)]
@@ -1362,6 +1392,7 @@ def build_data(version, ucd_path, output_path):
     with zipfile.ZipFile(os.path.join(ucd_path, 'UCD.zip'), 'r') as ucd_zip:
         with ucd_zip.open('Blocks.txt', 'r') as bdata:
             for line in bdata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1378,6 +1409,7 @@ def build_data(version, ucd_path, output_path):
         prev_cp = None
         with ucd_zip.open('UnicodeData.txt', 'r') as udata:
             for line in udata:
+                line = line.decode('utf-8')
                 fields = [f.strip() for f in line.split(';')]
                 cp = int(fields[0], 16)
 
@@ -1461,6 +1493,7 @@ def build_data(version, ucd_path, output_path):
         # Finish the case tables
         with ucd_zip.open('SpecialCasing.txt', 'r') as scdata:
             for line in scdata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1480,7 +1513,7 @@ def build_data(version, ucd_path, output_path):
         # Also do the Case Folding table
         with ucd_zip.open('CaseFolding.txt', 'r') as cfdata:
             for line in cfdata:
-                line = line.decode('utf8')
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1508,6 +1541,7 @@ def build_data(version, ucd_path, output_path):
         # Various normalization related tables
         with ucd_zip.open('DerivedNormalizationProps.txt', 'r') as dndata:
             for line in dndata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1569,6 +1603,7 @@ def build_data(version, ucd_path, output_path):
                 'abbreviation': UCD_ALIS_KIND_ABBREVIATION
                 }
             for line in aliasdata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1584,6 +1619,7 @@ def build_data(version, ucd_path, output_path):
         # Read the Hangul Syllable Type data
         with ucd_zip.open('HangulSyllableType.txt', 'r') as hstdata:
             for line in hstdata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1603,6 +1639,7 @@ def build_data(version, ucd_path, output_path):
         # Read the Bidi classes from the DerivedBidiClass.txt file
         with ucd_zip.open('extracted/DerivedBidiClass.txt', 'r') as bididata:
             for line in bididata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1622,6 +1659,7 @@ def build_data(version, ucd_path, output_path):
         # Read the Bidi_Mirroring_Glyph property
         with ucd_zip.open('BidiMirroring.txt', 'r') as bmdata:
             for line in bmdata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1636,6 +1674,7 @@ def build_data(version, ucd_path, output_path):
         # Read the Bidi_Paired_Bracked property
         with ucd_zip.open('BidiBrackets.txt', 'r') as bkdata:
             for line in bkdata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1655,6 +1694,7 @@ def build_data(version, ucd_path, output_path):
         # contains non-binary properties as well as binary ones.
         def do_binprops(thefile):
             for line in thefile:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1690,6 +1730,7 @@ def build_data(version, ucd_path, output_path):
         parray = binprops.setdefault('Composition_Exclusion', SparseArray())
         with ucd_zip.open('CompositionExclusions.txt', 'r') as cxdata:
             for line in cxdata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1706,6 +1747,7 @@ def build_data(version, ucd_path, output_path):
         # Read the Age property
         with ucd_zip.open('DerivedAge.txt', 'r') as adata:
             for line in adata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1728,6 +1770,7 @@ def build_data(version, ucd_path, output_path):
         # Read the script names from PropertyValueAliases
         with ucd_zip.open('PropertyValueAliases.txt', 'r') as pva:
             for line in pva:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1743,6 +1786,7 @@ def build_data(version, ucd_path, output_path):
         # Read the Script property
         with ucd_zip.open('Scripts.txt', 'r') as sdata:
             for line in sdata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1762,6 +1806,7 @@ def build_data(version, ucd_path, output_path):
         # Read the ScriptExtensions property
         with ucd_zip.open('ScriptExtensions.txt', 'r') as sedata:
             for line in sedata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1782,6 +1827,7 @@ def build_data(version, ucd_path, output_path):
         # And the Joining properties
         with ucd_zip.open('ArabicShaping.txt', 'r') as asdata:
             for line in asdata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1798,6 +1844,7 @@ def build_data(version, ucd_path, output_path):
         # Line breaking, grapheme breaking, sentence breaking, word breaking
         def read_category_data(thefile, breaking, breakmap):
             for line in thefile:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1829,6 +1876,7 @@ def build_data(version, ucd_path, output_path):
 
         with ucd_zip.open('EastAsianWidth.txt', 'r') as eadata:
             for line in eadata:
+                line = line.decode('utf-8')
                 line = line.split('#', 1)[0].strip()
                 if not line:
                     continue
@@ -1847,8 +1895,11 @@ def build_data(version, ucd_path, output_path):
                     eawidth[int(cps, 16)] = width
 
         # Indic Matra/Syllabic categories
-        with ucd_zip.open('IndicMatraCategory.txt', 'r') as imdata:
-            read_category_data(imdata, inmcat, inmc_map)
+        try:
+            imdata = ucd_zip.open('IndicMatraCategory.txt', 'r')
+        except KeyError:
+            imdata = ucd_zip.open('IndicPositionalCategory.txt', 'r')
+        read_category_data(imdata, inmcat, inmc_map)
 
         with ucd_zip.open('IndicSyllabicCategory.txt', 'r') as isdata:
             read_category_data(isdata, inscat, insc_map)
@@ -1866,6 +1917,7 @@ def build_data(version, ucd_path, output_path):
     with zipfile.ZipFile(os.path.join(ucd_path, 'Unihan.zip'), 'r') as unihan_zip:
         with unihan_zip.open('Unihan_NumericValues.txt', 'r') as nvdata:
             for line in nvdata:
+                line = line.decode('utf-8')
                 if line.startswith('#'):
                     continue
                 line = line.strip()
@@ -1882,6 +1934,7 @@ def build_data(version, ucd_path, output_path):
 
         with unihan_zip.open('Unihan_IRGSources.txt', 'r') as irgdata:
             for line in irgdata:
+                line = line.decode('utf-8')
                 if line.startswith('#'):
                     continue
                 line = line.strip()
@@ -1988,7 +2041,17 @@ def build_data(version, ucd_path, output_path):
 
     extra_tables = []
     for prop, tsym in binprop_tables:
-        tbl = gen_binprop_table(binprops[prop])
+        if isinstance(prop, tuple):
+            for n in prop:
+                bp = binprops.get(n, None)
+                if bp is not None:
+                    break
+            if bp is None:
+                raise KeyError('Cannot find property %s' % '/'.join(prop))
+        else:
+            bp = binprops[prop]
+            
+        tbl = gen_binprop_table(bp)
         tables.append((fourcc(tsym), len(tbl)))
         extra_tables.append(tbl)
         
