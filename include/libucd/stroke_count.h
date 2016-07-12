@@ -17,7 +17,7 @@ namespace ucd {
   private:
     unsigned _radical;
     bool     _simplified;
-    unsigned _additional_strokes;
+    int      _additional_strokes;
 
   public:
     typedef enum {
@@ -25,12 +25,12 @@ namespace ucd {
       simplified = 1
     } simplified_t;
 
-    stroke_count(unsigned r, simplified_t s, unsigned a)
+    stroke_count(unsigned r, simplified_t s, int a)
       : _radical(r), _simplified(s == simplified), _additional_strokes(a) {}
 
     unsigned radical() const { return _radical; }
     bool is_simplified() const { return _simplified; }
-    unsigned additional_strokes() const { return _additional_strokes; }
+    int additional_strokes() const { return _additional_strokes; }
 
     bool operator==(const stroke_count &other) const {
       return (_radical == other._radical 

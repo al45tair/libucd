@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can get Script values", "[sc]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.script('(') == Script::Common);
   REQUIRE(db.script('A') == Script::Latin);
@@ -18,7 +18,7 @@ TEST_CASE("we can get Script values", "[sc]") {
 TEST_CASE("we can get Script_Extensions information", "[sext]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   std::vector<sc> result;
   bool ok;
@@ -39,7 +39,7 @@ TEST_CASE("we can get Script_Extensions information", "[sext]") {
         && result[1] == Script::Copt);
   REQUIRE(ok);
 
-  result = db.script_extensions(0x3192);
+  result = db.script_extensions(0x303c);
   ok = (result.size() == 3 
         && result[0] == Script::Hani
         && result[1] == Script::Hira

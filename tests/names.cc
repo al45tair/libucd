@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can map names to code points", "[names]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   SECTION("mapping names to code points") {
     REQUIRE(db.codepoint_from_name("<<<not a real name>>>") == bad_codepoint);
@@ -71,7 +71,7 @@ TEST_CASE("we can map names to code points", "[names]") {
 TEST_CASE("aliases work", "[alias]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   SECTION("mapping names to code points") {
     REQUIRE(db.codepoint_from_name("NUL") == 0x0000);
@@ -118,7 +118,7 @@ TEST_CASE("aliases work", "[alias]") {
 TEST_CASE("can retrieve Unicode 1 names", "[u1names]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.unicode_1_name(0x0027) == "APOSTROPHE-QUOTE");
   REQUIRE(db.unicode_1_name(0x0041) == "");
@@ -128,7 +128,7 @@ TEST_CASE("can retrieve Unicode 1 names", "[u1names]") {
 TEST_CASE("can retrieve ISO comments", "[iso-comments]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   // There are no ISO comments in Unicode 7
   REQUIRE(db.iso_comment('A') == "");

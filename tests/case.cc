@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can obtain case mapping data", "[case]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   codepoint out[4];
   size_t len;
@@ -93,7 +93,7 @@ TEST_CASE("we can obtain case mapping data", "[case]") {
 TEST_CASE("we can obtain case folding data", "[casefold]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   SECTION("simple case folding") {
     REQUIRE(db.simple_case_folding('A') == codepoint('a'));
@@ -127,7 +127,7 @@ TEST_CASE("we can obtain case folding data", "[casefold]") {
 TEST_CASE("normalisation case folding works", "[nfkc-casefold]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   SECTION("NFKC case folding") {
     REQUIRE(db.nfkc_casefold('A') == cpvector({'a'}));

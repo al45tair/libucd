@@ -2150,8 +2150,8 @@ database::east_asian_width(codepoint cp) const
   return East_Asian_Width::Neutral;
 }
 
-InMC
-database::indic_matra_category(codepoint cp) const
+InPC
+database::indic_positional_category(codepoint cp) const
 {
   const struct ucd_inc *pinc = _pimpl->get_inmc();
 
@@ -2169,10 +2169,10 @@ database::indic_matra_category(codepoint cp) const
     else if (cp >= ncp)
       min = mid + 1;
     else
-      return Indic_Matra_Category(UCD_INC_CATEGORY(pinc->entries[mid]));
+      return Indic_Positional_Category(UCD_INC_CATEGORY(pinc->entries[mid]));
   }
 
-  return Indic_Matra_Category::NA;
+  return Indic_Positional_Category::NA;
 }
 
 InSC

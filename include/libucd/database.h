@@ -108,8 +108,13 @@ namespace ucd {
     ea east_asian_width(codepoint cp) const;
     stroke_count unicode_radical_stroke(codepoint cp) const;
 
-    InMC indic_matra_category(codepoint cp) const;
+    InPC indic_positional_category(codepoint cp) const;
     InSC indic_syllabic_category(codepoint cp) const;
+
+    // Backwards compatibility (renamed in Unicode 8)
+    InMC indic_matra_category(codepoint cp) {
+      return indic_positional_category(cp);
+    }
 
     // Normalisation properties
     bool composition_exclusion(codepoint cp) const;

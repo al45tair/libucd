@@ -5,7 +5,7 @@ import urllib
 def fetch(target, source, env):
     abspath = target[0].get_abspath()
     vers, fname = abspath.rsplit('/', 2)[-2:]
-    url = 'http://www.unicode.org/Public/%s/ucd/%s' % (vers, fname)
+    url = 'http://www.unicode.org/Public/zipped/%s/%s' % (vers, fname)
     print 'Fetching %s' % url
     urllib.urlretrieve(url, abspath)
 
@@ -15,8 +15,17 @@ env = Environment(BUILDERS = {'Fetch': fetch_bld})
 
 # Compiler options
 
-env['CCFLAGS'] = '-g -W -Wall -Wno-multichar'
-env['CXXFLAGS'] = '-g -W -Wall -Wno-multichar --std=c++14'
+env['CC'] = os.getenv('CC') or 'clang'
+env['CXX'] = os.getenv('CXX') or 'clang++'
+
+if env['CXX'] == 'clang++':
+    stdflags = '-std=c++14 -stdlib=libc++'
+else:
+    stdflags = '--std=c++14'
+
+env['CFLAGS'] = os.getenv('CFLAGS') or '-g -W -Wall -Wno-multichar'
+env['CXXFLAGS'] = os.getenv('CXXFLAGS') or ' '.join([env['CFLAGS'], stdflags])
+
 env['LIBPATH'] = ['lib']
 env['CPPPATH'] = ['include']
 
@@ -44,7 +53,7 @@ shared_lib = env.SharedLibrary('lib/ucd', sources)
 # Unicode Database
 fetches = []
 ucds = {}
-for version in ['7.0.0']:
+for version in ['9.0.0']:
     f1 = env.Fetch('ucd/%s/UCD.zip' % version, None)
     f2 = env.Fetch('ucd/%s/Unihan.zip' % version, None)
     fetches.append(f1)
@@ -75,5 +84,5 @@ test_runner = env.Program('tests/run_tests', test_sources,
 
 check = env.Command('check', None, 'tests/run_tests')
 env.Depends(check, test_runner)
-env.Depends(check, ucds['7.0.0'])
+env.Depends(check, ucds['9.0.0'])
 

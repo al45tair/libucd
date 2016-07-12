@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can examine NFC_Quick_Check et al", "[quick-check]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   REQUIRE(db.nfc_quick_check('A') == maybe::yes);
   REQUIRE(db.nfc_quick_check(0x0340) == maybe::no);

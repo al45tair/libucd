@@ -6,7 +6,7 @@ using namespace ucd;
 TEST_CASE("we can get breaking related values", "[breaking]") {
   database db;
 
-  db.open("ucd/packed/unicode-7.0.0.ucd");
+  db.open("ucd/packed/unicode-9.0.0.ucd");
 
   SECTION("Line_Break") {
     REQUIRE(db.line_break(0x08) == Line_Break::CM);

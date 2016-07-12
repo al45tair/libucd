@@ -578,10 +578,12 @@ struct ucd_eaw {
 
 struct ucd_rads_table_entry {
   uint8_t radical;
-  uint8_t stroke_info; // top bit means "simplified"
+  int8_t stroke_info; // top bit means "simplified"
 };
 
-#define UCD_RADS_STROKE_COUNT(stroke_info) ((stroke_info) & 0x7f)
+#define UCD_RADS_STROKE_COUNT(stroke_info) ((int8_t)(((stroke_info) & 0x7f)  \
+                                                     | (((stroke_info) << 1) \
+                                                        & 0x80)))
 #define UCD_RADS_IS_SIMPLIFIED(stroke_info) ((stroke_info) & 0x80)
 
 struct ucd_rads_range {
