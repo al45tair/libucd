@@ -68,7 +68,7 @@ for version in ['9.0.0']:
                                                               'ucd/%s' % version))
     env.Depends(ucds[version], [f1, f2])
 
-env.Default([static_lib, shared_lib] + ucds.values())
+env.Default([static_lib] + ucds.values())
 
 # Tests
 testdirs = subdirs('tests')

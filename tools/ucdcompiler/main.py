@@ -63,6 +63,7 @@ UCD_eaw = fourcc('eaw ')
 UCD_rads = fourcc('rads')
 UCD_inmc = fourcc('inmc')
 UCD_insc = fourcc('insc')
+UCD_prmc = fourcc('prmc')
 
 binprop_tables = [
     # Proplist
@@ -1102,6 +1103,21 @@ def gen_deco_table(deco):
     return b''.join([struct.pack(b'=I', len(deco_entries))] + fixed_entries
                     + deco_data)
 
+def gen_prmc_table(primc):
+    # Invert the primary composite table
+    compose = []
+    for cp,decomp in primc.items():
+        first, second = decomp
+        compose.append((first, second, cp))
+    compose.sort()
+
+    prmc_entries = []
+    for fsc in compose:
+        entry = struct.pack(b'=III', fsc[0], fsc[1], fsc[2])
+        prmc_entries.append(entry)
+
+    return b''.join([struct.pack(b'=I', len(prmc_entries))] + prmc_entries)
+
 def gen_mirr_table(bidimirr, bidimglyph):
     entries = []
     for cp,f in bidimirr.items():
@@ -1958,7 +1974,41 @@ def build_data(version, ucd_path, output_path):
                 add = int(add)
 
                 radstroke[cp] = (base, simp, add)
-        
+
+    # Generate primary composites
+    primc = SparseArray()
+    ## Canonical decompositions
+    for cp,d in deco.items():
+        tag,cps = d
+        if tag is not None:
+            continue
+        primc[cp] = cps
+    ## Hangul LV_Syllable and LVT_Syllable
+    # SBase = 0xac00
+    # LBase = 0x1100
+    # VBase = 0x1161
+    # TBase = 0x11a7
+    # LCount = 19
+    # VCount = 21
+    # TCount = 28
+    # NCount = VCount * TCount
+    # SCount = LCount * NCount
+    # for cp in range(SBase, SBase + SCount):
+    #     SIndex = cp - SBase
+    #     TIndex = SIndex % TCount
+
+    #     if TIndex == 0:
+    #         LIndex = SIndex / NCount
+    #         VIndex = (SIndex % NCount) / TCount
+    #         primc[cp] = (LBase + LIndex, VBase + VIndex)
+    #     else:
+    #         LVIndex = (SIndex / TCount) * TCount
+    #         primc[cp] = (SBase + LVIndex, TBase + TIndex)
+    ## Minus Full_Composition_Exclusion
+    bp = binprops['Full_Composition_Exclusion']
+    for cp,fce in bp.items():
+        del primc[cp]
+
     name_tab = gen_name_table(forward, reverse, special_ranges)
     u1nm_tab = gen_string_table(u1names)
     isoc_tab = gen_string_table(isocomments)
@@ -2000,6 +2050,8 @@ def build_data(version, ucd_path, output_path):
 
     inmc_tab = gen_category_table(inmcat)
     insc_tab = gen_category_table(inscat)
+
+    prmc_tab = gen_prmc_table(primc)
     
     tables = [
         (UCD_blok, len(blok_tab)),
@@ -2037,6 +2089,7 @@ def build_data(version, ucd_path, output_path):
         (UCD_rads, len(rads_tab)),
         (UCD_inmc, len(inmc_tab)),
         (UCD_insc, len(insc_tab)),
+        (UCD_prmc, len(prmc_tab)),
         ]
 
     extra_tables = []
@@ -2162,6 +2215,9 @@ def build_data(version, ucd_path, output_path):
         # Indic Matra/Syllabic Categories
         out.write(inmc_tab)
         out.write(insc_tab)
+
+        # Primary Composition table
+        out.write(prmc_tab)
         
         # Write the binary property tables
         for tbl in extra_tables:

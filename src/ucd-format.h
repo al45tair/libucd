@@ -78,6 +78,7 @@ enum {
   UCD_rads = 'rads',    /* Unicode Radical Stroke table    */
   UCD_inmc = 'inmc',    /* Indic Matra Category table      */
   UCD_insc = 'insc',    /* Indic Syllabic Category table   */
+  UCD_prmc = 'prmc',    /* Primary Composite table         */
 };
 
 /* There are a large number of tables ending with a '?' that are not defined
@@ -606,6 +607,19 @@ struct ucd_inc {
 
 #define UCD_INC_CODEPOINT(entry)        ((entry) & 0x00ffffff)
 #define UCD_INC_CATEGORY(entry)            ((entry) >> 24)
+
+/* .. prmc .................................................................. */
+
+struct ucd_prmc_entry {
+  uint32_t starter;
+  uint32_t composing;
+  uint32_t composite;
+};
+
+struct ucd_prmc {
+  uint32_t              num_entries;
+  struct ucd_prmc_entry entries[0];     // Stored in sorted order
+};
 
 #pragma pack(pop)
 

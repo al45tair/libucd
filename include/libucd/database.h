@@ -101,6 +101,8 @@ namespace ucd {
     cpvector decomposition_mapping(codepoint cp) const;
     cpvector decomposition_mapping(codepoint cp, dt &dtype) const;
 
+    codepoint primary_composite(codepoint starter, codepoint composing) const;
+
     version age(codepoint cp) const;
     sc script(codepoint cp) const;
     std::vector<sc> script_extensions(codepoint cp) const;

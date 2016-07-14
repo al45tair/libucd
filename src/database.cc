@@ -73,6 +73,7 @@ struct database::impl {
   const struct ucd_eaw     *peaw;
   const struct ucd_rads    *prads;
   const struct ucd_inc     *pinmc, *pinsc;
+  const struct ucd_prmc    *pprmc;
 
 #define BINPROP(n,m,t) const struct ucd_binprop *pbinprop_ ## m;
 #include "ucd-binprops.h"
@@ -118,6 +119,7 @@ struct database::impl {
   const struct ucd_rads *get_rads();
   const struct ucd_inc *get_inmc();
   const struct ucd_inc *get_insc();
+  const struct ucd_prmc *get_prmc();
 
 #undef BINPROP
 #define BINPROP(n,m,t)                                           \
@@ -484,6 +486,15 @@ database::impl::get_insc()
     pinsc = (struct ucd_inc *)get_table(UCD_insc);
 
   return pinsc;
+}
+
+const struct ucd_prmc *
+database::impl::get_prmc()
+{
+  if (!pprmc)
+    pprmc = (struct ucd_prmc *)get_table(UCD_prmc);
+
+  return pprmc;
 }
 
 void
@@ -1737,6 +1748,51 @@ database::decomposition_mapping(codepoint cp, dt &dtype) const
 
   result.push_back(cp);
   return result;
+}
+
+codepoint
+database::primary_composite(codepoint starter, codepoint composing) const
+{
+  const struct ucd_prmc *pprmc = _pimpl->get_prmc();
+
+  // Deal with Hangul
+  if (starter >= LBase && starter < LBase + LCount
+      && composing >= VBase && composing < VBase + VCount) {
+    unsigned LIndex = starter - LBase;
+    unsigned VIndex = composing - VBase;
+    unsigned LVIndex = LIndex * NCount + VIndex * TCount;
+
+    return SBase + LVIndex;
+  } else if (starter >= SBase && starter < SBase + SCount
+             && composing >= TBase && composing < TBase + TCount) {
+    unsigned SIndex = starter - SBase;
+
+    if ((SIndex % TCount) == 0) {
+      unsigned TIndex = composing - TBase;
+
+      return starter + TIndex;
+    }
+  }
+
+  // Otherwise, look up in the prmc table
+  unsigned min = 0, max = pprmc->num_entries, mid;
+
+  while (min < max) {
+    mid = (min + max) / 2;
+
+    const struct ucd_prmc_entry &entry = pprmc->entries[mid];
+
+    if (starter < entry.starter
+        || (starter == entry.starter && composing < entry.composing))
+      max = mid;
+    else if (starter > entry.starter
+             || (starter == entry.starter && composing > entry.composing))
+      min = mid + 1;
+    else
+      return entry.composite;
+  }
+
+  return 0;
 }
 
 bool
