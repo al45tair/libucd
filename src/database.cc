@@ -1671,8 +1671,10 @@ database::decomposition_mapping(codepoint cp,
     }
   }
 
-  if (out_len >= 1)
+  if (out_len >= 1) {
+    dtype = Decomposition_Type::None;
     *out = cp;
+  }
   return 1;
 }
 
@@ -1746,6 +1748,7 @@ database::decomposition_mapping(codepoint cp, dt &dtype) const
     }
   }
 
+  dtype = Decomposition_Type::None;
   result.push_back(cp);
   return result;
 }
