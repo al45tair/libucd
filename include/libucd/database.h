@@ -35,7 +35,8 @@ namespace ucd {
     void close();
 
     version unicode_version() const;
-    
+    version emoji_version() const;
+
     /* This method does lookups based on Name and Name_Alias; it does not
        and will not use Unicode_1_Name. */
     codepoint codepoint_from_name(const std::string &name,
@@ -204,6 +205,12 @@ namespace ucd {
     bool id_continue(codepoint cp) const;
     bool xid_start(codepoint cp) const;
     bool xid_continue(codepoint cp) const;
+
+    // Emoji properties
+    bool emoji(codepoint cp) const;
+    bool emoji_presentation(codepoint cp) const;
+    bool emoji_modifier(codepoint cp) const;
+    bool emoji_modifier_base(codepoint cp) const;
   };
 
 }

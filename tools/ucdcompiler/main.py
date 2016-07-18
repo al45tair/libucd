@@ -27,7 +27,7 @@ def fourcc(s):
 def twocc(s):
     return struct.unpack(b'!H', s.encode('ascii'))[0]
 
-UCD_MAGIC = fourcc('ucd0')
+UCD_MAGIC = fourcc('ucd1')
 UCD_blok = fourcc('blok')
 UCD_strn = fourcc('strn')
 UCD_name = fourcc('name')
@@ -131,8 +131,19 @@ binprop_tables = [
     ('Expands_On_NFKD', 'xNd?'),
     ('Expands_On_NFKC', 'xNc?'),
     ('Changes_When_NFKC_Casefolded', 'CWc?'),
+
+    # Emoji Data
+    ('Emoji', 'Emj?'),
+    ('Emoji_Presentation', 'EmP?'),
+    ('Emoji_Modifier', 'EmM?'),
+    ('Emoji_Modifier_Base', 'EmB?'),
     
     ]
+
+optional_binprops = set(['Emoji',
+                         'Emoji_Presentation',
+                         'Emoji_Modifier',
+                         'Emoji_Modifier_Base'])
 
 UCD_ALIS_KIND_CORRECTION   = 0x01
 UCD_ALIS_KIND_CONTROL      = 0x02
@@ -1355,7 +1366,15 @@ class StringTableGenerator (object):
     def as_table(self):
         return struct.pack(b'=I', self.next_sid) + b'\0'.join(self.strings)
     
-def build_data(version, ucd_path, output_path):
+def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
+    if emoji_path:
+        print('Building Unicode data for version %s with emoji version %s\n' % (
+            '.'.join(str(v) for v in version),
+            '.'.join(str(v) for v in emoji_version)))
+    else:
+        print('Building Unicode data for version %s with NO EMOJI\n' %
+              '.'.join(str(v) for v in emoji_version))
+
     strings = StringTableGenerator()
     forward = []
     reverse = []
@@ -1975,6 +1994,13 @@ def build_data(version, ucd_path, output_path):
 
                 radstroke[cp] = (base, simp, add)
 
+    # If we have Emoji data, parse that also
+    if emoji_path:
+        with open(os.path.join(emoji_path, 'emoji-data.txt'), 'r') as emdata:
+            do_binprops(emdata)
+    else:
+        emoji_version=(0,0)
+    
     # Generate primary composites
     primc = SparseArray()
     ## Canonical decompositions
@@ -2099,11 +2125,15 @@ def build_data(version, ucd_path, output_path):
                 bp = binprops.get(n, None)
                 if bp is not None:
                     break
-            if bp is None:
-                raise KeyError('Cannot find property %s' % '/'.join(prop))
         else:
-            bp = binprops[prop]
-            
+            bp = binprops.get(prop, None)
+
+        if bp is None:
+            if prop not in optional_binprops:
+                raise KeyError('Cannot find property %s' % '/'.join(prop))
+            else:
+                continue
+                        
         tbl = gen_binprop_table(bp)
         tables.append((fourcc(tsym), len(tbl)))
         extra_tables.append(tbl)
@@ -2121,11 +2151,12 @@ def build_data(version, ucd_path, output_path):
     
     with open(output_path, 'wb') as out:
         # Write the header
-        out.write(struct.pack(b'=III', UCD_MAGIC,
+        out.write(struct.pack(b'=IIII', UCD_MAGIC,
                               (version[0] << 16) | (version[1] << 8) | version[2],
+                              (emoji_version[0] << 16) | (emoji_version[1] << 8),
                               len(tables)))
 
-        hdr_len = 12 + 8 * len(tables)
+        hdr_len = 16 + 8 * len(tables)
 
         offset = hdr_len
         for tid, size in tables:

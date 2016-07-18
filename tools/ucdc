@@ -5,15 +5,19 @@ import sys
 import re
 
 def usage():
-   print("""usage: ucdc <version> <ucd-path> <unicode-x.y.z.ucd>
+   print("""usage: ucdc <version> <ucd-path> <emoji-version> <emoji-path> <unicode-x.y.z.ucd>
 
 Generates the binary Unicode Database file unicode-x.y.z.ucd from the data at
-ucd-path, which should contain UCD.zip.
+ucd-path, which should contain UCD.zip and Unihan.zip, and the data at
+emoji-path, which should contain (at least) emoji-data.txt.
+
+If you don't need Emoji data, you can specify None for emoji-path.  You can
+detect a ucd file without Emoji data because its Emoji version will be 0.0.0.
 
 You do not need to unzip the UCD zip file before running this program.""",
          file=sys.stderr);
 
-if len(sys.argv) != 4:
+if len(sys.argv) != 6:
     usage()
     exit(1)
     
@@ -25,4 +29,17 @@ if not m:
 
 version = tuple([int(x) for x in m.groups()])
 
-ucdcompiler.build_data(version, sys.argv[2], sys.argv[3])
+m = re.match(r'(\d+)\.(\d+)', sys.argv[3])
+
+if not m:
+    usage()
+    exit(1)
+
+emoji_version = tuple([int(x) for x in m.groups()])
+emoji_path = sys.argv[4]
+if emoji_path == 'None':
+    emoji_path = None
+    
+ucdcompiler.build_data(version, sys.argv[2],
+                       emoji_version, emoji_path,
+                       sys.argv[5])

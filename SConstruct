@@ -2,16 +2,26 @@
 import os, os.path
 import urllib
 
-def fetch(target, source, env):
+def fetchucd(target, source, env):
     abspath = target[0].get_abspath()
     vers, fname = abspath.rsplit('/', 2)[-2:]
     url = 'http://www.unicode.org/Public/zipped/%s/%s' % (vers, fname)
     print 'Fetching %s' % url
     urllib.urlretrieve(url, abspath)
 
-fetch_bld = Builder(action=fetch)
+fetchucd_bld = Builder(action=fetchucd)
 
-env = Environment(BUILDERS = {'Fetch': fetch_bld})
+def fetchemj(target, source, env):
+    abspath = target[0].get_abspath()
+    vers, fname = abspath.rsplit('/', 2)[-2:]
+    url = 'http://www.unicode.org/Public/emoji/%s/%s' % (vers, fname)
+    print 'Fetching %s' % url
+    urllib.urlretrieve(url, abspath)
+
+fetchemj_bld = Builder(action=fetchemj)
+
+env = Environment(BUILDERS = {'FetchUcd': fetchucd_bld,
+                              'FetchEmoji': fetchemj_bld})
 
 # Compiler options
 
@@ -53,20 +63,25 @@ shared_lib = env.SharedLibrary('lib/ucd', sources)
 # Unicode Database
 fetches = []
 ucds = {}
-for version in ['9.0.0']:
-    f1 = env.Fetch('ucd/%s/UCD.zip' % version, None)
-    f2 = env.Fetch('ucd/%s/Unihan.zip' % version, None)
+for version in [('9.0.0', '3.0')]:
+    ucdver = version[0]
+    emjver = version[1]
+    f1 = env.FetchUcd('ucd/%s/UCD.zip' % ucdver, None)
+    f2 = env.FetchUcd('ucd/%s/Unihan.zip' % ucdver, None)
+    f3 = env.FetchEmoji('emoji/%s/emoji-data.txt' % emjver, None)
     fetches.append(f1)
     fetches.append(f2)
+    fetches.append(f3)
 
-    zipfile = 'ucd/%s/UCD.zip' % version
-    unihanfile = 'ucd/%s/Unihan.zip' % version
-    ucdfile = 'ucd/packed/unicode-%s.ucd' % version
-
-    ucds[version] = env.Command(ucdfile, [zipfile, unihanfile],
-                                'tools/ucdc %s %s $TARGET' % (version,
-                                                              'ucd/%s' % version))
-    env.Depends(ucds[version], [f1, f2])
+    zipfile = 'ucd/%s/UCD.zip' % ucdver
+    unihanfile = 'ucd/%s/Unihan.zip' % ucdver
+    emjfile = 'emoji/%s/emoji-data.txt' % emjver
+    ucdfile = 'ucd/packed/unicode-%s.ucd' % ucdver
+    ucds[ucdver] = env.Command(ucdfile, [zipfile, unihanfile, emjfile],
+                               'tools/ucdc %s %s %s %s $TARGET' \
+                               % (ucdver, 'ucd/%s' % ucdver,
+                                  emjver, 'emoji/%s' % emjver ))
+    env.Depends(ucds[ucdver], [f1, f2, f3])
 
 env.Default([static_lib] + ucds.values())
 
