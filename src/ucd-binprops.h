@@ -67,3 +67,9 @@ BINPROP("Expands_On_NFC", expands_on_nfc, 'xNC?')
 BINPROP("Expands_On_NFKD", expands_on_nfkd, 'xNd?')
 BINPROP("Expands_On_NFKC", expands_on_nfkc, 'xNc?')
 BINPROP("Changes_When_NFKC_Casefolded", changes_when_nfkc_casefolded, 'CWc?')
+
+/* emoji-data.txt */
+BINPROP("Emoji", emoji, 'Emj?')
+BINPROP("Emoji_Presentation", emoji_presentation, 'EmP?')
+BINPROP("Emoji_Modifier", emoji_modifier, 'EmM?')
+BINPROP("Emoji_Modifier_Base", emoji_modifier_base, 'EmB?')

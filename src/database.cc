@@ -591,6 +591,14 @@ database::unicode_version() const
   return version(uver >> 16, (uver >> 8) & 0xff, uver & 0xff);
 }
 
+version
+database::emoji_version() const
+{
+  uint32_t uver = _pimpl->pheader->emoji_version;
+
+  return version(uver >> 16, (uver >> 8) & 0xff, uver & 0xff);
+}
+
 codepoint
 database::codepoint_from_name(const std::string &name,
                               unsigned allowed_types) const

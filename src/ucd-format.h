@@ -21,7 +21,7 @@ typedef uint32_t ucd_string_id_t;
 /* .. Header ................................................................ */
 
 enum {
-  UCD_MAGIC = 'ucd0'
+  UCD_MAGIC = 'ucd1'
 };
 
 enum {
@@ -36,6 +36,7 @@ struct ucd_table {
 struct ucd_header {
   uint32_t        magic;
   uint32_t        unicode_version;     /* 00070102 = 7.1.2 */
+  uint32_t        emoji_version;       /* 00030100 = 3.1 */
   uint32_t        num_tables;
   struct ucd_table tables[0];
 };
