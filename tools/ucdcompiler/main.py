@@ -681,7 +681,7 @@ def gen_case_table(mapping, debug=False):
                                      cur_chunk[2], cur_chunk[3]))
                         ranges.append(struct.pack(b'=IHHHH',
                                                   cur_base \
-                                                  | UCD_CASE_RANGE_UCS2T3,
+                                                  | UCD_CASE_RANGE_UCS2T4,
                                                   cur_chunk[0],
                                                   cur_chunk[1],
                                                   cur_chunk[2],
