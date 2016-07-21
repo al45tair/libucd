@@ -1190,6 +1190,9 @@ namespace ucd {
   typedef Hangul_Syllable_Type hst;
   typedef Decomposition_Type dt;
   typedef Bidi_Class bc;
+
+  namespace GC = General_Category;
+  namespace CCC = Canonical_Combining_Class;
 }
 
 #endif /* LIBUCD_TYPES_H_ */
