@@ -81,6 +81,24 @@ namespace ucd {
   // General_Category values
   namespace General_Category {
     enum {
+      Group_Mask  = '\xff\0',
+
+      Letter      = 'L\0',
+      Mark        = 'M\0',
+      Number      = 'N\0',
+      Punctuation = 'P\0',
+      Symbol      = 'S\0',
+      Separator   = 'Z\0',
+      Other       = 'C\0',
+
+      L = Letter,
+      M = Mark,
+      N = Number,
+      P = Punctuation,
+      S = Symbol,
+      Z = Separator,
+      C = Other,
+
       Lu = 'Lu',        // Letter, uppercase
       Ll = 'Ll',        // Letter, lowercase
       Lt = 'Lt',        // Letter, titlecase
@@ -150,6 +168,10 @@ namespace ucd {
       Paragraph_Separator = Zp,
       Space_Separator = Zs
     };
+
+    inline bool is_group(unsigned value) {
+      return !(value & ~Group_Mask);
+    }
   };
 
   // Canonical_Combining_Class values
