@@ -623,7 +623,7 @@ database::codepoint_from_name(const std::string &name,
     unsigned long cp = std::strtoul(cname + hexoffset, &endptr, 16);
     size_t count = endptr - cname  - hexoffset;
     if (*endptr == '\0' && count >= 4 && count <= 6) {
-      if (cp > 0x10ffff)
+      if (cp > 0x10ffff || (cp >= 0xd800 && cp <= 0xdfff))
         return bad_codepoint;
       return (codepoint)cp;
     }
