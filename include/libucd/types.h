@@ -153,7 +153,7 @@ namespace ucd {
       Decimal_Number = Nd,
       Letter_Number = Nl,
       Other_Number = No,
-      Connection_Punctuation = Pc,
+      Connector_Punctuation = Pc,
       Dash_Punctuation = Pd,
       Close_Punctuation = Pe,
       Final_Punctuation = Pf,
@@ -167,6 +167,17 @@ namespace ucd {
       Line_Separator = Zl,
       Paragraph_Separator = Zp,
       Space_Separator = Zs
+
+      cntrl = Control,
+      digit = Decimal_Number
+      punct = Punctuation,
+
+      Combining_Mark = Mark,
+
+      // Special category values, not stored in the database
+      Any       = 0xffff,
+      Available = 0xfffe,
+      ASCII     = 0xfffd
     };
 
     inline bool is_group(unsigned value) {
