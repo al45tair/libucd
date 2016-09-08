@@ -492,7 +492,16 @@ insc_map = {
     'Consonant_Killer': 33,
     'Syllable_Modifier': 34,
 }
-    
+
+_medial_re = re.compile(r'(?<=[A-Za-z])-(?=[A-Za-z])')
+_space_under_re = re.compile(r'[ _]+')
+def loose_key(t):
+    s = t[0].lower()
+    if s != "hangul jungseong o-e":
+        s = _medial_re.sub('', s)
+    s = _space_under_re.sub('', s)
+    return s
+
 def gen_name_table(forward, reverse, special_ranges):
     """Generate the name table."""
     fwd_data = b''.join([struct.pack(b'=II', cp, sid) for cp, sid in forward])
@@ -1944,9 +1953,9 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
         catranges.append((prev_cp + 1, 'Cn'))
 
     forward.sort()
-    reverse.sort()
+    reverse.sort(key=loose_key)
     alias_forward.sort()
-    alias_reverse.sort()
+    alias_reverse.sort(key=loose_key)
 
     # Now scan the Unihan database
     with zipfile.ZipFile(os.path.join(ucd_path, 'Unihan.zip'), 'r') as unihan_zip:

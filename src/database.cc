@@ -543,7 +543,7 @@ database::open(const char *filename)
                                                 _pimpl->fd,
                                                 0);
   _pimpl->mapped = true;
-  
+
   const struct ucd_header *phead = _pimpl->pheader;
 
   if (!phead)
@@ -563,12 +563,12 @@ database::database(const void *base, size_t length)
   _pimpl->len = length;
   _pimpl->pheader = (struct ucd_header *)base;
   _pimpl->mapped = false;
-  
+
   const struct ucd_header *phead = _pimpl->pheader;
-  
+
   if (phead->magic != UCD_MAGIC)
     throw bad_data_file("not a UCD database");
-  
+
   if (phead->num_tables > UCD_MAX_TABLES)
     throw bad_data_file("too many tables in UCD database");
 }
@@ -597,6 +597,49 @@ database::emoji_version() const
   uint32_t uver = _pimpl->pheader->emoji_version;
 
   return version(uver >> 16, (uver >> 8) & 0xff, uver & 0xff);
+}
+
+static int
+loose_match_name(const char *a, const char *aend, const char *b,
+                 bool ignore_medial=true)
+{
+  while (a != aend && *a && *b) {
+    while (a != aend && *a && (*a == ' ' || *a == '_'
+                               || (ignore_medial && *a == '-')))
+      ++a;
+    if (a == aend || !*a)
+      break;
+
+    while (*b && (*b == ' ' || *b == '_'))
+      ++b;
+    if (!*b)
+      break;
+
+    char cha = *a++;
+    char chb = *b++;
+
+    if (cha >= 'A' && cha <= 'Z')
+      cha = cha - 'A' + 'a';
+    if (chb >= 'A' && chb <= 'Z')
+      chb = chb - 'A' + 'a';
+
+    if (cha < chb)
+      return -1;
+    if (cha > chb)
+      return +1;
+  }
+
+  while (a != aend && *a && (*a == ' ' || *a == '_'))
+    ++a;
+  while (*b && (*b == ' ' || *b == '_'))
+    ++b;
+
+  if (a != aend && *a)
+    return +1;
+  else if (*b)
+    return -1;
+  else
+    return 0;
 }
 
 codepoint
@@ -672,6 +715,30 @@ database::codepoint_from_name(const std::string &name,
   if (!pnames)
     throw no_name_table("data file doesn't contain name table");
 
+  // Handle U+1180 as a special case
+  static const char *jungseong = "hangul jungseong o-e";
+
+  if (loose_match_name(jungseong, jungseong + 20, cname, false) == 0)
+    return 0x1180;
+
+  // Strip dashes, underscores and whitespace
+  std::string stripped;
+  const char *ptr = cname;
+  bool last_was_letter = false;
+
+  while (*ptr) {
+    if (last_was_letter && *ptr == '-'
+        && ptr[1] != ' ' && ptr[1] != '\t' && ptr[1] != '\n' && ptr[1] != '_')
+      ++ptr;
+    while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '_')
+      ++ptr;
+
+    stripped += *ptr++;
+    last_was_letter = true;
+  }
+
+  cname = stripped.c_str();
+
   entries = pnames->names + pnames->num_names;
 
   uint32_t min = 0, max = pnames->num_names, mid;
@@ -682,11 +749,17 @@ database::codepoint_from_name(const std::string &name,
     uint32_t sid = entries[mid].name;
     size_t max_len;
     const char *nameptr = _pimpl->get_strptr_unsafe(sid, max_len);
-    int ret = ::strncasecmp(cname, nameptr, max_len);
+    const char *nameend = nameptr + max_len;
 
-    if (ret < 0)
+    /* U+1180 is a special case because U+116C and U+1180 only differ in
+       the medial hyphen; when comparing with U+1180, we *do not* ignore
+       medial hyphens */
+    int ret = loose_match_name(nameptr, nameend, cname,
+                               entries[mid].code_point!=0x1180);
+
+    if (ret > 0)
       max = mid;
-    else if (ret > 0)
+    else if (ret < 0)
       min = mid + 1;
     else
       return entries[mid].code_point;
@@ -697,18 +770,19 @@ database::codepoint_from_name(const std::string &name,
     const struct ucd_alias *aliases = palis->aliases + palis->num_aliases;
     min = 0;
     max = palis->num_aliases;
-    
+
     while (min < max) {
       mid = (min + max) / 2;
 
       uint32_t sid = aliases[mid].name;
       size_t max_len;
       const char *nameptr = _pimpl->get_strptr_unsafe(sid, max_len);
-      int ret = ::strncasecmp(cname, nameptr, max_len);
+      const char *nameend = nameptr + max_len;
+      int ret = loose_match_name(nameptr, nameend, cname);
 
-      if (ret < 0)
+      if (ret > 0)
         max = mid;
-      else if (ret > 0)
+      else if (ret < 0)
         min = mid + 1;
       else {
         codepoint cp = UCD_ALIAS_CODE_POINT(aliases[mid].entry);

@@ -10,3 +10,4 @@ xcuserdata
 ucd/*
 emoji/*
 lib/*
+tests/run_tests
