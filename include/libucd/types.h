@@ -166,18 +166,18 @@ namespace ucd {
       Other_Symbol = So,
       Line_Separator = Zl,
       Paragraph_Separator = Zp,
-      Space_Separator = Zs
+      Space_Separator = Zs,
 
       cntrl = Control,
-      digit = Decimal_Number
+      digit = Decimal_Number,
       punct = Punctuation,
 
       Combining_Mark = Mark,
 
       // Special category values, not stored in the database
-      Any       = 0xffff,
-      Available = 0xfffe,
-      ASCII     = 0xfffd
+      Any      = 0xffff,
+      Assigned = 0xfffe,
+      ASCII    = 0xfffd
     };
 
     inline bool is_group(unsigned value) {
