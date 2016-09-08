@@ -26,6 +26,8 @@ TEST_CASE("we can look up blocks", "[blocks]") {
     REQUIRE(db.block_from_name("basic latin")->name() == "Basic Latin");
     REQUIRE(db.block_from_name("ARABIC PRESENTATION FORMS-B")->name()
             == "Arabic Presentation Forms-B");
+    REQUIRE(db.block_from_name("cyrillicextended b")->name()
+            == "Cyrillic Extended-B");
     REQUIRE(db.block_from_name("<nonexistent block>") == nullptr);
   }
 }

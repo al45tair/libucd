@@ -48,6 +48,8 @@ TEST_CASE("we can map names to code points", "[names]") {
     REQUIRE(db.codepoint_from_name("Linear B Ideogram B107M hegoat") == 0x10089);
     REQUIRE(db.codepoint_from_name("hangul jungseong oe") == 0x116c);
     REQUIRE(db.codepoint_from_name("hangul jungseong o-e") == 0x1180);
+    REQUIRE(db.codepoint_from_name("TIBETAN MARK TSA -PHRU") == 0x0f39);
+    REQUIRE(db.codepoint_from_name("alchemical symbol for borax 3") == 0x1f744);
   }
 
   SECTION("mapping code points to names") {
