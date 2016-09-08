@@ -39,6 +39,15 @@ TEST_CASE("we can map names to code points", "[names]") {
     REQUIRE(db.codepoint_from_name("grinning FACE") == 0x1f600);
     REQUIRE(db.codepoint_from_name("FRENCH franc SIGN") == 0x20a3);
     REQUIRE(db.codepoint_from_name("LATIN CAPITAL letter A") == 0x0041);
+
+    // Should ignore whitespace
+    REQUIRE(db.codepoint_from_name("zerowidthspace") == 0x200b);
+    REQUIRE(db.codepoint_from_name("RIGHTWARDSarrowWITHCornerDownwards") == 0x21b4);
+
+    // Should ignore medial hyphens, except for U+1180 because of U+116c
+    REQUIRE(db.codepoint_from_name("Linear B Ideogram B107M hegoat") == 0x10089);
+    REQUIRE(db.codepoint_from_name("hangul jungseong oe") == 0x116c);
+    REQUIRE(db.codepoint_from_name("hangul jungseong o-e") == 0x1180);
   }
 
   SECTION("mapping code points to names") {

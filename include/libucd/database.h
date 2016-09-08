@@ -64,7 +64,7 @@ namespace ucd {
     const class block *block(codepoint cp) const;
     const class block *block_from_name(const std::string &name) const;
     const std::vector<class block> &blocks() const;
-    
+
     /* These unify Simple_Uppercase_Mapping with Uppercase_Mapping, etc.
        If you need Simple_Uppercase_Mapping specifically, just check if
        there is only a single codepoint of output.  Similarly if you just
