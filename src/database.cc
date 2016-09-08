@@ -599,18 +599,38 @@ database::emoji_version() const
   return version(uver >> 16, (uver >> 8) & 0xff, uver & 0xff);
 }
 
-static int
-loose_match_name(const char *a, const char *aend, const char *b,
-                 bool ignore_medial=true)
+enum {
+  LOOSE_IGNORE_MEDIAL = 1,
+  LOOSE_IGNORE_DASHES = 2
+};
+
+static bool
+char_is_space(char ch)
 {
+  return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
+}
+
+static int
+loose_match(const char *a, const char *aend, const char *b,
+            unsigned options=LOOSE_IGNORE_DASHES)
+{
+  bool ignore_dashes = options & LOOSE_IGNORE_DASHES;
+  bool ignore_medial = options & LOOSE_IGNORE_MEDIAL;
+  bool last_was_letter = false;
+
   while (a != aend && *a && *b) {
-    while (a != aend && *a && (*a == ' ' || *a == '_'
-                               || (ignore_medial && *a == '-')))
+    if (ignore_medial && last_was_letter && a != aend && *a && *a == '-'
+        && aend - a > 1
+        && !char_is_space(a[1]) && a[1] != '_')
+      ++a;
+
+    while (a != aend && *a && (char_is_space(*a) || *a == '_'
+                               || (ignore_dashes && *a == '-')))
       ++a;
     if (a == aend || !*a)
       break;
 
-    while (*b && (*b == ' ' || *b == '_'))
+    while (*b && (char_is_space(*b) || *b == '_'))
       ++b;
     if (!*b)
       break;
@@ -627,11 +647,14 @@ loose_match_name(const char *a, const char *aend, const char *b,
       return -1;
     if (cha > chb)
       return +1;
+
+    if (ignore_medial)
+      last_was_letter = true;
   }
 
-  while (a != aend && *a && (*a == ' ' || *a == '_'))
+  while (a != aend && *a && (char_is_space(*a) || *a == '_'))
     ++a;
-  while (*b && (*b == ' ' || *b == '_'))
+  while (*b && (char_is_space(*b) || *b == '_'))
     ++b;
 
   if (a != aend && *a)
@@ -718,7 +741,7 @@ database::codepoint_from_name(const std::string &name,
   // Handle U+1180 as a special case
   static const char *jungseong = "hangul jungseong o-e";
 
-  if (loose_match_name(jungseong, jungseong + 20, cname, false) == 0)
+  if (loose_match(jungseong, jungseong + 20, cname, 0) == 0)
     return 0x1180;
 
   // Strip dashes, underscores and whitespace
@@ -727,10 +750,9 @@ database::codepoint_from_name(const std::string &name,
   bool last_was_letter = false;
 
   while (*ptr) {
-    if (last_was_letter && *ptr == '-'
-        && ptr[1] != ' ' && ptr[1] != '\t' && ptr[1] != '\n' && ptr[1] != '_')
+    if (last_was_letter && *ptr == '-' && !char_is_space(ptr[1]) && ptr[1] != '_')
       ++ptr;
-    while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '_')
+    while (char_is_space(*ptr) || *ptr == '_')
       ++ptr;
 
     stripped += *ptr++;
@@ -754,8 +776,9 @@ database::codepoint_from_name(const std::string &name,
     /* U+1180 is a special case because U+116C and U+1180 only differ in
        the medial hyphen; when comparing with U+1180, we *do not* ignore
        medial hyphens */
-    int ret = loose_match_name(nameptr, nameend, cname,
-                               entries[mid].code_point!=0x1180);
+    int ret = loose_match(nameptr, nameend, cname,
+                          entries[mid].code_point!=0x1180
+                          ? LOOSE_IGNORE_MEDIAL : 0);
 
     if (ret > 0)
       max = mid;
@@ -778,7 +801,7 @@ database::codepoint_from_name(const std::string &name,
       size_t max_len;
       const char *nameptr = _pimpl->get_strptr_unsafe(sid, max_len);
       const char *nameend = nameptr + max_len;
-      int ret = loose_match_name(nameptr, nameend, cname);
+      int ret = loose_match(nameptr, nameend, cname, LOOSE_IGNORE_MEDIAL);
 
       if (ret > 0)
         max = mid;
@@ -1560,13 +1583,28 @@ database::blocks() const
 const class block *
 database::block_from_name(const std::string &name) const
 {
-  const char *nstr = name.c_str();
+  std::string stripped;
+
+  for (auto it = name.begin(); it != name.end(); ++it) {
+    while (char_is_space(*it)
+           || *it == '_'
+           || *it == '-')
+      ++it;
+    if (it == name.end())
+      break;
+    char ch = *it;
+    if (ch >= 'A' && ch <= 'Z')
+      ch = ch - 'A' + 'a';
+    stripped += ch;
+  }
+
+  const char *nstr = stripped.c_str();
 
   if (!_pimpl->blocks.size())
     _pimpl->init_blocks();
 
   for (auto i = _pimpl->blocks.begin(); i != _pimpl->blocks.end(); ++i) {
-    if (::strcasecmp(nstr, i->name().c_str()) == 0)
+    if (loose_match(i->name().c_str(), NULL, nstr, LOOSE_IGNORE_DASHES) == 0)
       return &*i;
   }
 

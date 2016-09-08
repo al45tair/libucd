@@ -493,7 +493,7 @@ insc_map = {
     'Syllable_Modifier': 34,
 }
 
-_medial_re = re.compile(r'(?<=[A-Za-z])-(?=[A-Za-z])')
+_medial_re = re.compile(r'(?<=[^ \t\r\n_])-(?=[^ \t\r\n_])')
 _space_under_re = re.compile(r'[ _]+')
 def loose_key(t):
     s = t[0].lower()
