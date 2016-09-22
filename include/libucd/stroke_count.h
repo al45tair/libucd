@@ -33,14 +33,19 @@ namespace ucd {
     int additional_strokes() const { return _additional_strokes; }
 
     bool operator==(const stroke_count &other) const {
-      return (_radical == other._radical 
+      return (_radical == other._radical
               && _simplified == other._simplified
               && _additional_strokes == other._additional_strokes);
     }
     bool operator!=(const stroke_count &other) const {
-      return (_radical != other._radical 
+      return (_radical != other._radical
               || _simplified != other._simplified
               || _additional_strokes != other._additional_strokes);
+    }
+    bool operator<(const stroke_count &other) const {
+      return (_radical < other._radical
+              || _simplified < other._simplified
+              || _additional_strokes < other._additional_strokes);
     }
 
     static const stroke_count none;

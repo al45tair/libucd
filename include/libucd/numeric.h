@@ -61,16 +61,22 @@ namespace ucd {
     bool isinf() const { return _multiplier && _base == 0 && _exponent < 0; }
 
     /* N.B. These DO NOT test numerical equality. */
-    bool operator==(const numeric &other) {
+    bool operator==(const numeric &other) const {
       return (_multiplier == other._multiplier
               && _base == other._base
               && _exponent == other._exponent);
     }
 
-    bool operator!=(const numeric &other) {
+    bool operator!=(const numeric &other) const {
       return (_multiplier != other._multiplier
               || _base != other._base
               || _exponent != other._exponent);
+    }
+
+    bool operator<(const numeric &other) const {
+      return (_multiplier < other._multiplier
+              || _base < other._base
+              || _exponent < other._exponent);
     }
 
     explicit operator double() const {
