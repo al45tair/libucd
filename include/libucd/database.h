@@ -177,10 +177,12 @@ namespace ucd {
     bool other_uppercase(codepoint cp) const;
     bool pattern_syntax(codepoint cp) const;
     bool pattern_white_space(codepoint cp) const;
+    bool prepended_concatenation_mark(codepoint cp) const;
     bool quotation_mark(codepoint cp) const;
     bool radical(codepoint cp) const;
     bool soft_dotted(codepoint cp) const;
     bool sterm(codepoint cp) const;
+    bool sentence_terminal(codepoint cp) const { return sterm(cp); }
     bool terminal_punctuation(codepoint cp) const;
     bool unified_ideograph(codepoint cp) const;
     bool variation_selector(codepoint cp) const;
