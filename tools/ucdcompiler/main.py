@@ -91,6 +91,7 @@ binprop_tables = [
     ('Other_Uppercase', 'OUc?'),
     ('Pattern_Syntax', 'PSy?'),
     ('Pattern_White_Space', 'PWS?'),
+    ('Prepended_Concatenation_Mark', 'PCM?'),
     ('Quotation_Mark', 'QMa?'),
     ('Radical', 'Rad?'),
     ('Soft_Dotted', 'SDt?'),
@@ -143,7 +144,8 @@ binprop_tables = [
 optional_binprops = set(['Emoji',
                          'Emoji_Presentation',
                          'Emoji_Modifier',
-                         'Emoji_Modifier_Base'])
+                         'Emoji_Modifier_Base',
+                         'Prepended_Concatenation_Mark'])
 
 UCD_ALIS_KIND_CORRECTION   = 0x01
 UCD_ALIS_KIND_CONTROL      = 0x02
