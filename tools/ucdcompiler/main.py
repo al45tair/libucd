@@ -27,7 +27,7 @@ def fourcc(s):
 def twocc(s):
     return struct.unpack(b'!H', s.encode('ascii'))[0]
 
-UCD_MAGIC = fourcc('ucd1')
+UCD_MAGIC = fourcc('ucd2')
 UCD_blok = fourcc('blok')
 UCD_strn = fourcc('strn')
 UCD_name = fourcc('name')
@@ -50,6 +50,7 @@ UCD_brak = fourcc('brak')
 UCD_deco = fourcc('deco')
 UCD_age = fourcc('age ')
 UCD_scpt = fourcc('scpt')
+UCD_scpn = fourcc('scpn')
 UCD_cqc = fourcc('cqc ')
 UCD_kcqc = fourcc('kcqc')
 UCD_dqc = fourcc('dqc ')
@@ -967,7 +968,7 @@ def gen_jamo_table(hst):
 def gen_block_table(blocks):
     "Generate the block table, which contains the ranges and names for blocks."
     return struct.pack(b'=I', len(blocks)) \
-        + b''.join([struct.pack(b'=III', f, l, n) for f, l, n in blocks])
+        + b''.join([struct.pack(b'=IIII', f, l, n, a) for f, l, n, a in blocks])
 
 _nvalue_re = re.compile(r'(?P<sign>[+-]?)(?P<numerator>[0-9]+)(?:/(?P<denominator>[0-9]+))?')
 
@@ -1245,6 +1246,15 @@ def gen_script_table(scripts, scriptexts):
                     + fixed_entries
                     + extdata)
 
+def gen_script_name_table(forward, reverse):
+    """Generate the script name table."""
+    fwd_data = b''.join([struct.pack(b'=II', cp, sid) for cp, sid in forward])
+    rev_data = b''.join([struct.pack(b'=II', cp, sid) for n, cp, sid in reverse])
+
+    return b''.join([struct.pack(b'=I', len(forward)),
+                     fwd_data,
+                     rev_data])
+
 def gen_qc_table(qcinfo):
     entries = []
     prev_cp = -1
@@ -1412,6 +1422,8 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     versions = set()
     scripts = SparseArray()
     scriptexts = SparseArray()
+    script_forward = []
+    script_reverse = []
     scriptmap = {}
     binprops = {}
     special_ranges = {}
@@ -1430,12 +1442,13 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     radstroke = SparseArray()
     inmcat = SparseArray()
     inscat = SparseArray()
-    
+
     range_re = re.compile(r'([A-Fa-f0-9]{4,6})\.\.([A-Fa-f0-9]{4,6})')
     special_re = re.compile(r'<(.+), (First|Last)>')
 
     # First scan the data in the UCD.zip file
     with zipfile.ZipFile(os.path.join(ucd_path, 'UCD.zip'), 'r') as ucd_zip:
+        blkdict = {}
         with ucd_zip.open('Blocks.txt', 'r') as bdata:
             for line in bdata:
                 line = line.decode('utf-8')
@@ -1450,7 +1463,31 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
                 name = name_unicode.encode('ascii')
                 sid = strings.add(name)
 
-                blocks.append((first_cp, last_cp, sid))
+                blkdict[name] = [first_cp, last_cp, None]
+
+        with ucd_zip.open('PropertyValueAliases.txt', 'r') as pvadata:
+            for line in pvadata:
+                line = line.decode('utf-8')
+                line = line.split('#', 1)[0].strip()
+                if not line:
+                    continue
+
+                fields = [f.strip() for f in line.split(';')]
+                if fields[0] == 'blk':
+                    l = blkdict.get(fields[2], None)
+                    if l is not None:
+                        short_name = fields[1].encode('ascii')
+                        l[2] = short_name
+
+        for name,info in blkdict.iteritems():
+            sidname = strings.add(name)
+            if info[2]:
+                abname = strings.add(info[2])
+            else:
+                abname = sidname
+            blocks.append((info[0], info[1], sidname, abname))
+
+        blocks.sort()
 
         prev_cp = None
         with ucd_zip.open('UnicodeData.txt', 'r') as udata:
@@ -1828,7 +1865,13 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
                 for alias in fields[2:]:
                     scriptmap[alias] = fields[1]
                 scriptmap[fields[1]] = fields[1]
-                
+
+                scpt = fourcc(fields[1])
+                name = fields[2].encode('ascii')
+                sid = strings.add(name)
+                script_forward.append((scpt, sid))
+                script_reverse.append((name, scpt, sid))
+
         # Read the Script property
         with ucd_zip.open('Scripts.txt', 'r') as sdata:
             for line in sdata:
@@ -1958,7 +2001,9 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     reverse.sort(key=loose_key)
     alias_forward.sort()
     alias_reverse.sort(key=loose_key)
-
+    script_forward.sort()
+    script_reverse.sort(key=loose_key)
+    
     # Now scan the Unihan database
     with zipfile.ZipFile(os.path.join(ucd_path, 'Unihan.zip'), 'r') as unihan_zip:
         with unihan_zip.open('Unihan_NumericValues.txt', 'r') as nvdata:
@@ -2070,7 +2115,8 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     brak_tab = gen_brak_table(brakdata)
     age_tab = gen_age_table(versions, ages)
     scpt_tab = gen_script_table(scripts, scriptexts)
-
+    scpn_tab = gen_script_name_table(script_forward, script_reverse)
+    
     cqc_tab = gen_qc_table(cqc)
     kcqc_tab = gen_qc_table(kcqc)
     dqc_tab = gen_qc_table(dqc)
@@ -2113,6 +2159,7 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
         (UCD_brak, len(brak_tab)),
         (UCD_age, len(age_tab)),
         (UCD_scpt, len(scpt_tab)),
+        (UCD_scpn, len(scpn_tab)),
         (UCD_cqc, len(cqc_tab)),
         (UCD_kcqc, len(kcqc_tab)),
         (UCD_dqc, len(dqc_tab)),
@@ -2230,8 +2277,9 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
         # Write the age table
         out.write(age_tab)
 
-        # Write the script table
+        # Write the script table and the script name table
         out.write(scpt_tab)
+        out.write(scpn_tab)
 
         # Write the quick check tables
         out.write(cqc_tab)

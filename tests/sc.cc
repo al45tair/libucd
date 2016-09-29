@@ -15,6 +15,39 @@ TEST_CASE("we can get Script values", "[sc]") {
   REQUIRE(db.script(0x118a0) == Script::Warang_Citi);
 }
 
+TEST_CASE("we can get Script names", "[sc-names]") {
+  database db;
+
+  db.open("ucd/packed/unicode-9.0.0.ucd");
+
+  REQUIRE(db.name_from_script(Script::Latin) == "Latin");
+  REQUIRE(db.name_from_script(Script::Hluw) == "Anatolian_Hieroglyphs");
+
+  // FourCCs go straight through
+  REQUIRE(db.name_from_script('Four') == "Four");
+}
+
+TEST_CASE("we can look up scripts by name", "[sc-lookup]") {
+  database db;
+
+  db.open("ucd/packed/unicode-9.0.0.ucd");
+
+  REQUIRE(db.script_from_name("egyptian hieroglyphs") == Script::Egyp);
+  REQUIRE(db.script_from_name("oldturkic") == Script::Orkh);
+  REQUIRE(db.script_from_name("uGaRiTiC") == Script::Ugar);
+
+  // FourCCs go straight through
+  REQUIRE(db.script_from_name("four") == 'Four');
+
+  // Except for Qaai and Qaac
+  REQUIRE(db.script_from_name("qaai") == 'Zinh');
+  REQUIRE(db.script_from_name("qAaC") == 'Copt');
+
+  // Other unknown names return bad_script
+  REQUIRE(db.script_from_name("The Hitchhiker's Guide to the Galaxy")
+          == Script::bad_script);
+}
+
 TEST_CASE("we can get Script_Extensions information", "[sext]") {
   database db;
 

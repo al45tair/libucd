@@ -16,15 +16,18 @@ namespace ucd {
   private:
     codepoint   _first, _last;
     std::string _name;
+    std::string _alias;
 
   public:
     block() {}
-  block(codepoint first, codepoint last, const std::string &name)
-    : _first(first), _last(last), _name(name) {}
-  block(const block &o)
-    : _first(o._first), _last(o._last), _name(o._name) {}
-  block(block &&o)
-    : _first(o._first), _last(o._last), _name(std::move(o._name)) {}
+    block(codepoint first, codepoint last, const std::string &name,
+          const std::string &alias)
+      : _first(first), _last(last), _name(name), _alias(alias) {}
+    block(const block &o)
+      : _first(o._first), _last(o._last), _name(o._name), _alias(o._alias) {}
+    block(block &&o)
+      : _first(o._first), _last(o._last), _name(std::move(o._name)),
+        _alias(std::move(o._alias)) {}
 
     bool operator==(const block &other) const {
       return (_first == other._first
@@ -40,6 +43,7 @@ namespace ucd {
     codepoint last() const { return _last; }
     bool contains(codepoint cp) const { return cp >= _first && cp <= _last; }
     std::string name() const { return _name; }
+    std::string alias() const { return _alias; }
   };
 
 }
