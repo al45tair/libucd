@@ -177,7 +177,8 @@ namespace ucd {
       // Special category values, not stored in the database
       Any      = 0xffff,
       Assigned = 0xfffe,
-      ASCII    = 0xfffd
+      ASCII    = 0xfffd,
+      LC       = 0xfffc,
     };
 
     inline bool is_group(unsigned value) {
