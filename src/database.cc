@@ -67,6 +67,7 @@ struct database::impl {
   const struct ucd_brak    *pbrak;
   const struct ucd_age     *page;
   const struct ucd_scpt    *pscpt;
+  const struct ucd_scpn    *pscpn;
   const struct ucd_qc      *pnfcqc, *pnfkcqc, *pnfdqc, *pnfkdqc;
   const struct ucd_join    *pjoin;
   const struct ucd_brk     *plbrk, *pgbrk, *psbrk, *pwbrk;
@@ -106,6 +107,7 @@ struct database::impl {
   const struct ucd_brak *get_brak();
   const struct ucd_age *get_age();
   const struct ucd_scpt *get_scpt();
+  const struct ucd_scpn *get_scpn();
   const struct ucd_qc *get_nfcqc();
   const struct ucd_qc *get_nfkcqc();
   const struct ucd_qc *get_nfdqc();
@@ -371,6 +373,15 @@ database::impl::get_scpt()
   return pscpt;
 }
 
+const struct ucd_scpn *
+database::impl::get_scpn()
+{
+  if (!pscpn)
+    pscpn = (struct ucd_scpn *)get_table(UCD_scpn);
+
+  return pscpn;
+}
+
 const struct ucd_qc *
 database::impl::get_nfcqc()
 {
@@ -505,7 +516,8 @@ database::impl::init_blocks()
   for (unsigned n = 0; n < pblok->num_blocks; ++n) {
     blocks.push_back(ucd::block(pblok->blocks[n].first_cp,
                                 pblok->blocks[n].last_cp,
-                                get_string(pblok->blocks[n].name)));
+                                get_string(pblok->blocks[n].name),
+                                get_string(pblok->blocks[n].alias)));
   }
 }
 
@@ -1604,7 +1616,8 @@ database::block_from_name(const std::string &name) const
     _pimpl->init_blocks();
 
   for (auto i = _pimpl->blocks.begin(); i != _pimpl->blocks.end(); ++i) {
-    if (loose_match(i->name().c_str(), NULL, nstr, LOOSE_IGNORE_DASHES) == 0)
+    if (loose_match(i->name().c_str(), NULL, nstr, LOOSE_IGNORE_DASHES) == 0
+        || loose_match(i->alias().c_str(), NULL, nstr, LOOSE_IGNORE_DASHES) == 0)
       return &*i;
   }
 
@@ -2097,6 +2110,113 @@ database::script_extensions(codepoint cp) const
   }
 
   return result;
+}
+
+sc
+database::script_from_name(const std::string &name) const
+{
+  const struct ucd_scpn *pscpn = _pimpl->get_scpn();
+  std::string stripped;
+  const struct ucd_scpn_entry *entries;
+
+  // Cope with arbitrary fourcc names
+  if (name.size() == 4) {
+    sc script = 0;
+    unsigned n;
+
+    for (n = 0; n < 4; ++n) {
+      char ch = name[n];
+
+      if ((ch < 'a' || ch > 'z')
+          && (ch < 'A' || ch > 'Z'))
+        break;
+
+      if (n == 0)
+        ch &= ~0x20;
+      else
+        ch |= 0x20;
+
+      script = (script << 8) | ch;
+    }
+
+    if (n == 4) {
+      if (script == 'Qaac')
+        script = ucd::SC::Copt;
+      else if (script == 'Qaai')
+        script = ucd::SC::Zinh;
+
+      return script;
+    }
+  }
+
+  // Otherwise, search the table
+  for (auto it = name.begin(); it != name.end(); ++it) {
+    while (char_is_space(*it)
+           || *it == '_'
+           || *it == '-')
+      ++it;
+    if (it == name.end())
+      break;
+    char ch = *it;
+    if (ch >= 'A' && ch <= 'Z')
+      ch = ch - 'A' + 'a';
+    stripped += ch;
+  }
+
+  const char *nstr = stripped.c_str();
+
+  entries = pscpn->names + pscpn->num_names;
+
+  uint32_t min = 0, max = pscpn->num_names, mid;
+
+  while (min < max) {
+    mid = (min + max) / 2;
+
+    uint32_t sid = entries[mid].name;
+    size_t max_len;
+    const char *nameptr = _pimpl->get_strptr_unsafe(sid, max_len);
+    const char *nameend = nameptr + max_len;
+
+    int ret = loose_match(nameptr, nameend, nstr, LOOSE_IGNORE_DASHES);
+
+    if (ret > 0)
+      max = mid;
+    else if (ret < 0)
+      min = mid + 1;
+    else
+      return entries[mid].script;
+  }
+
+  return ucd::SC::bad_script;
+}
+
+std::string
+database::name_from_script(sc script) const
+{
+  const struct ucd_scpn *pscpn = _pimpl->get_scpn();
+
+  uint32_t min = 0, max = pscpn->num_names, mid;
+
+  while (min < max) {
+    mid = (min + max) / 2;
+
+    sc s = pscpn->names[mid].script;
+    if (s > script)
+      max = mid;
+    else if (s < script)
+      min = mid + 1;
+    else
+      return _pimpl->get_string(pscpn->names[mid].name);
+  }
+
+  char buf[5];
+  for (unsigned n = 0; n < 4; ++n) {
+    char ch = char(script >> (8 * (3 - n)));
+    buf[n] = ch;
+  }
+  buf[4] = 0;
+
+  return buf;
 }
 
 static maybe

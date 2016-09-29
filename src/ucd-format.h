@@ -21,7 +21,7 @@ typedef uint32_t ucd_string_id_t;
 /* .. Header ................................................................ */
 
 enum {
-  UCD_MAGIC = 'ucd1'
+  UCD_MAGIC = 'ucd2'
 };
 
 enum {
@@ -66,6 +66,7 @@ enum {
   UCD_deco = 'deco',    /* Decomposition table             */
   UCD_age  = 'age ',    /* Age table                       */
   UCD_scpt = 'scpt',    /* Scripts table                   */
+  UCD_scpn = 'scpn',    /* Script names table              */
   UCD_cqc  = 'cqc ',    /* NFC quick check table           */
   UCD_kcqc = 'kcqc',    /* NFKC quick check table          */
   UCD_dqc  = 'dqc ',    /* NFD quick check table           */
@@ -98,6 +99,7 @@ struct ucd_block {
   uint32_t        first_cp;
   uint32_t        last_cp;
   ucd_string_id_t name;
+  ucd_string_id_t alias;
 };
 
 struct ucd_blok {
@@ -516,6 +518,22 @@ struct ucd_scpt {
   uint32_t              num_entries;
   struct ucd_scpt_entry entries[0];
   // struct ucd_scpt_extensions extensions;
+};
+
+/* .. scpn .................................................................. */
+
+/* The scpn table contains two arrays of ucd_scpt_entry structures; the first
+   is sorted by script, the second by name (NOT by sid, but according to the
+   actual strings). */
+
+struct ucd_scpn_entry {
+  uint32_t        script;
+  ucd_string_id_t name;
+};
+
+struct ucd_scpn {
+  uint32_t              num_names;
+  struct ucd_scpn_entry names[0];
 };
 
 /* .. cqc /kcqc/dqc /kdqc ................................................... */

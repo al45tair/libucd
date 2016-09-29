@@ -108,6 +108,9 @@ namespace ucd {
     sc script(codepoint cp) const;
     std::vector<sc> script_extensions(codepoint cp) const;
 
+    sc script_from_name(const std::string &name) const;
+    std::string name_from_script(sc script) const;
+
     ea east_asian_width(codepoint cp) const;
     stroke_count unicode_radical_stroke(codepoint cp) const;
 
