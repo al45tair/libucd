@@ -51,7 +51,9 @@ enum {
   UCD_u1nm = 'u1nm',    /* Unicode 1 name table            */
   UCD_isoc = 'isoc',    /* ISO Comment table               */
   UCD_jamo = 'jamo',    /* Hangul syllable type table      */
+  UCD_jamn = 'jmo$',    /* Hangul syllable type name table */
   UCD_genc = 'genc',    /* General Category table          */
+  UCD_gcn  = 'gc$ ',    /* General Category name table     */
   UCD_CASE = 'CASE',    /* Uppercase Mapping table         */
   UCD_case = 'case',    /* Lowercase Mapping table         */
   UCD_Case = 'Case',    /* Titlecase Mapping table         */
@@ -59,32 +61,86 @@ enum {
   UCD_kccf = 'kccf',    /* NFKC Case Folding table         */
   UCD_nfkc = 'nfkc',    /* FC_NFKC_Closure table           */
   UCD_ccc  = 'ccc ',    /* Canonical Combining Class table */
+  UCD_cccn = 'ccc$',    /* CCC name table                  */
   UCD_numb = 'numb',    /* Numeric Type/Value table        */
+  UCD_numn = 'num$',    /* Numeric Type name table         */
   UCD_bidi = 'bidi',    /* Bidi table                      */
+  UCD_bdin = 'bdi$',    /* Bidi name table                 */
   UCD_mirr = 'mirr',    /* Bidi mirroring table            */
   UCD_brak = 'brak',    /* Bidi bracket table              */
   UCD_deco = 'deco',    /* Decomposition table             */
+  UCD_decn = 'dec$',    /* Decomposition name table        */
   UCD_age  = 'age ',    /* Age table                       */
   UCD_scpt = 'scpt',    /* Scripts table                   */
-  UCD_scpn = 'scpn',    /* Script names table              */
+  UCD_scpn = 'scp$',    /* Script names table              */
   UCD_cqc  = 'cqc ',    /* NFC quick check table           */
   UCD_kcqc = 'kcqc',    /* NFKC quick check table          */
   UCD_dqc  = 'dqc ',    /* NFD quick check table           */
   UCD_kdqc = 'kdqc',    /* NFKD quick check table          */
   UCD_join = 'join',    /* Joining table                   */
+  UCD_jonn = 'jon$',    /* Joining name table              */
   UCD_lbrk = 'lbrk',    /* Line breaking table             */
+  UCD_lbkn = 'lbkn',    /* Line breaking name table        */
   UCD_gbrk = 'gbrk',    /* Grapheme Cluster Break table    */
+  UCD_gbkn = 'gbk$',    /* GCB name table                  */
   UCD_sbrk = 'sbrk',    /* Sentence breaking table         */
+  UCD_sbkn = 'sbk$',    /* Sentence break name table       */
   UCD_wbrk = 'wbrk',    /* Word breaking table             */
+  UCD_wbkn = 'wbk$',    /* Word break name table           */
   UCD_eaw  = 'eaw ',    /* East Asian width table          */
+  UCD_eawn = 'eaw$',    /* East Asian width name table     */
   UCD_rads = 'rads',    /* Unicode Radical Stroke table    */
   UCD_inmc = 'inmc',    /* Indic Matra Category table      */
+  UCD_imcn = 'imc$',    /* Indic Matra Category name table */
   UCD_insc = 'insc',    /* Indic Syllabic Category table   */
+  UCD_iscn = 'isc$',    /* Indic Syllabic Cat name table   */
   UCD_prmc = 'prmc',    /* Primary Composite table         */
 };
 
 /* There are a large number of tables ending with a '?' that are not defined
    here, but instead you will find a table of them in ucd-binprops.h */
+
+/* Tables ending in '$' contain name data for the associated values */
+
+/* .. ...$ .................................................................. */
+
+/* In each case, there are num_fwd + num_rev entries; the first set is sorted by
+   value, the second by (case-folded) name, so that we can map both ways.
+   In general, num_fwd and num_rev can differ; specifically, there can be
+   aliases, which means that there may be more reverse entries than forward
+   entries. */
+struct ucd_n32_entry {
+  uint32_t        value;
+  ucd_string_id_t name;
+};
+
+struct ucd_n32 {
+  uint32_t             num_fwd;
+  uint32_t             num_rev;
+  struct ucd_n32_entry names[0];
+};
+
+struct ucd_n16_entry {
+  uint16_t        value;
+  ucd_string_id_t name;
+};
+
+struct ucd_n16 {
+  uint32_t             num_fwd;
+  uint32_t             num_rev;
+  struct ucd_n16_entry names[0];
+};
+
+struct ucd_n8_entry {
+  uint8_t         value;
+  ucd_string_id_t name;
+};
+
+struct ucd_n8 {
+  uint32_t             num_fwd;
+  uint32_t             num_rev;
+  struct ucd_n8_entry  names[0];
+};
 
 /* .. strn .................................................................. */
 
@@ -520,22 +576,6 @@ struct ucd_scpt {
   // struct ucd_scpt_extensions extensions;
 };
 
-/* .. scpn .................................................................. */
-
-/* The scpn table contains two arrays of ucd_scpt_entry structures; the first
-   is sorted by script, the second by name (NOT by sid, but according to the
-   actual strings). */
-
-struct ucd_scpn_entry {
-  uint32_t        script;
-  ucd_string_id_t name;
-};
-
-struct ucd_scpn {
-  uint32_t              num_names;
-  struct ucd_scpn_entry names[0];
-};
-
 /* .. cqc /kcqc/dqc /kdqc ................................................... */
 
 enum {
@@ -573,6 +613,11 @@ struct ucd_join {
   uint32_t              num_entries;
   struct ucd_join_entry entries[0];
 };
+
+/* .. jon$ .................................................................. */
+
+/* The jon$ table contains *two* name tables, the first for join type, and
+   the second for joining group. */
 
 /* .. lbrk/gbrk/sbrk/wbrk ................................................... */
 
@@ -625,7 +670,7 @@ struct ucd_inc {
 };
 
 #define UCD_INC_CODEPOINT(entry)        ((entry) & 0x00ffffff)
-#define UCD_INC_CATEGORY(entry)            ((entry) >> 24)
+#define UCD_INC_CATEGORY(entry)         ((entry) >> 24)
 
 /* .. prmc .................................................................. */
 

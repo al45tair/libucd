@@ -34,13 +34,13 @@ namespace ucd {
                           && bugfix <= other.bugfix))));
     }
     bool operator==(const version &other) const {
-      return (major == other.major 
-              && minor == other.minor 
+      return (major == other.major
+              && minor == other.minor
               && bugfix == other.bugfix);
     }
     bool operator!=(const version &other) const {
-      return (major != other.major 
-              || minor != other.minor 
+      return (major != other.major
+              || minor != other.minor
               || bugfix != other.bugfix);
     }
     bool operator>(const version &other) const {

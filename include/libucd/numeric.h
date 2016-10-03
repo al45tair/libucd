@@ -47,8 +47,8 @@ namespace ucd {
     constexpr numeric(int n) : _multiplier(n), _base(10), _exponent(0) {}
     constexpr numeric(int n, int b, int e)
       : _multiplier(n), _base(b), _exponent(e) {}
-    constexpr numeric(const numeric &o) 
-      : _multiplier(o._multiplier), 
+    constexpr numeric(const numeric &o)
+      : _multiplier(o._multiplier),
       _base(o._base),
       _exponent(o._exponent)
     {};

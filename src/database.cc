@@ -45,11 +45,77 @@ static const char *jongseong[TCount] = {
   "LP", "LH", "M", "B", "BS", "S", "SS", "NG", "J", "C", "K", "T", "P", "H"
 };
 
+enum {
+  LOOSE_IGNORE_MEDIAL = 1,
+  LOOSE_IGNORE_DASHES = 2
+};
+
+static bool
+char_is_space(char ch)
+{
+  return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
+}
+
+static int
+loose_match(const char *a, const char *aend, const char *b,
+            unsigned options=LOOSE_IGNORE_DASHES)
+{
+  bool ignore_dashes = options & LOOSE_IGNORE_DASHES;
+  bool ignore_medial = options & LOOSE_IGNORE_MEDIAL;
+  bool last_was_letter = false;
+
+  while (a != aend && *a && *b) {
+    if (ignore_medial && last_was_letter && a != aend && *a && *a == '-'
+        && aend - a > 1
+        && !char_is_space(a[1]) && a[1] != '_')
+      ++a;
+
+    while (a != aend && *a && (char_is_space(*a) || *a == '_'
+                               || (ignore_dashes && *a == '-')))
+      ++a;
+    if (a == aend || !*a)
+      break;
+
+    while (*b && (char_is_space(*b) || *b == '_'))
+      ++b;
+    if (!*b)
+      break;
+
+    char cha = *a++;
+    char chb = *b++;
+
+    if (cha >= 'A' && cha <= 'Z')
+      cha = cha - 'A' + 'a';
+    if (chb >= 'A' && chb <= 'Z')
+      chb = chb - 'A' + 'a';
+
+    if (cha < chb)
+      return -1;
+    if (cha > chb)
+      return +1;
+
+    if (ignore_medial)
+      last_was_letter = true;
+  }
+
+  while (a != aend && *a && (char_is_space(*a) || *a == '_'))
+    ++a;
+  while (*b && (char_is_space(*b) || *b == '_'))
+    ++b;
+
+  if (a != aend && *a)
+    return +1;
+  else if (*b)
+    return -1;
+  else
+    return 0;
+}
+
 struct database::impl {
   int                       fd;
   off_t                     len;
   bool                      mapped;
-  
+
   const struct ucd_header  *pheader;
   const struct ucd_strings *pstrings;
   const struct ucd_names   *pnames;
@@ -67,7 +133,6 @@ struct database::impl {
   const struct ucd_brak    *pbrak;
   const struct ucd_age     *page;
   const struct ucd_scpt    *pscpt;
-  const struct ucd_scpn    *pscpn;
   const struct ucd_qc      *pnfcqc, *pnfkcqc, *pnfdqc, *pnfkdqc;
   const struct ucd_join    *pjoin;
   const struct ucd_brk     *plbrk, *pgbrk, *psbrk, *pwbrk;
@@ -75,6 +140,18 @@ struct database::impl {
   const struct ucd_rads    *prads;
   const struct ucd_inc     *pinmc, *pinsc;
   const struct ucd_prmc    *pprmc;
+
+  const struct ucd_n32     *pscpn;
+  const struct ucd_n16     *pjamn;
+  const struct ucd_n16     *pgcn;
+  const struct ucd_n8      *pcccn;
+  const struct ucd_n8      *pnumn;
+  const struct ucd_n8      *pbdin;
+  const struct ucd_n8      *pdecn;
+  const struct ucd_n8      *pjtn, *pjgn;
+  const struct ucd_n8      *plbkn, *pgbkn, *psbkn, *pwbkn;
+  const struct ucd_n8      *peawn;
+  const struct ucd_n8      *pimcn, *piscn;
 
 #define BINPROP(n,m,t) const struct ucd_binprop *pbinprop_ ## m;
 #include "ucd-binprops.h"
@@ -90,7 +167,7 @@ struct database::impl {
   const struct ucd_names *get_names();
   const struct ucd_u1nm *get_u1nm();
   const struct ucd_isoc *get_isoc();
-  const struct ucd_alis *get_aliases();
+  const struct ucd_alis *get_alis();
   const struct ucd_jamo *get_jamo();
   const struct ucd_genc *get_genc();
   const struct ucd_numb *get_numb();
@@ -107,7 +184,6 @@ struct database::impl {
   const struct ucd_brak *get_brak();
   const struct ucd_age *get_age();
   const struct ucd_scpt *get_scpt();
-  const struct ucd_scpn *get_scpn();
   const struct ucd_qc *get_nfcqc();
   const struct ucd_qc *get_nfkcqc();
   const struct ucd_qc *get_nfdqc();
@@ -123,6 +199,23 @@ struct database::impl {
   const struct ucd_inc *get_insc();
   const struct ucd_prmc *get_prmc();
 
+  const struct ucd_n16 *get_jamn();
+  const struct ucd_n16 *get_gcn();
+  const struct ucd_n8  *get_cccn();
+  const struct ucd_n8  *get_numn();
+  const struct ucd_n8  *get_bdin();
+  const struct ucd_n8  *get_decn();
+  const struct ucd_n8  *get_jtn();
+  const struct ucd_n8  *get_jgn();
+  const struct ucd_n8  *get_lbkn();
+  const struct ucd_n8  *get_gbkn();
+  const struct ucd_n8  *get_sbkn();
+  const struct ucd_n8  *get_wbkn();
+  const struct ucd_n8  *get_eawn();
+  const struct ucd_n8  *get_imcn();
+  const struct ucd_n8  *get_iscn();
+  const struct ucd_n32 *get_scpn();
+
 #undef BINPROP
 #define BINPROP(n,m,t)                                           \
   const struct ucd_binprop *get_binprop_##m() {                  \
@@ -133,6 +226,59 @@ struct database::impl {
 #include "ucd-binprops.h"
 
   void init_blocks();
+
+  std::string strip(const std::string &s);
+  template <class table, class valtype>
+  bool search(const table *ptbl, valtype value, std::string &str)
+  {
+    uint32_t min = 0, max = ptbl->num_fwd, mid;
+
+    while (min < max) {
+      mid = (min + max) / 2;
+
+      if (value < ptbl->names[mid].value)
+        max = mid;
+      else if (value > ptbl->names[mid].value)
+        min = mid + 1;
+      else {
+        str = get_string(ptbl->names[mid].name);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  template <class table, class valtype>
+  bool search(const table *ptbl, const std::string &str, valtype &result)
+  {
+    std::string stripped = strip(str);
+    const char *nstr = stripped.c_str();
+    uint32_t min = 0, max = ptbl->num_rev, mid;
+    auto *entries = ptbl->names + ptbl->num_fwd;
+
+    while (min < max) {
+      mid = (min + max) / 2;
+
+      uint32_t sid = entries[mid].name;
+      size_t max_len;
+      const char *nameptr = get_strptr_unsafe(sid, max_len);
+      const char *nameend = nameptr + max_len;
+
+      int ret = loose_match(nameptr, nameend, nstr, LOOSE_IGNORE_DASHES);
+
+      if (ret > 0)
+        max = mid;
+      else if (ret < 0)
+        min = mid + 1;
+      else {
+        result = entries[mid].value;
+        return true;
+      }
+    }
+
+    return false;
+  }
 };
 
 database::impl::~impl()
@@ -193,319 +339,80 @@ database::impl::get_string(ucd_string_id_t sid)
   return std::string(ptr, len);
 }
 
-const struct ucd_names *
-database::impl::get_names()
-{
-  if (!pnames)
-    pnames = (struct ucd_names *)get_table(UCD_name);
-
-  return pnames;
+#define GETTER(name,type,ident)                 \
+const struct type *                             \
+database::impl::get_##name() {                  \
+  if (!p##name)                                 \
+    p##name = (struct type *)get_table(ident);  \
+  return p##name;                               \
 }
 
-const struct ucd_u1nm *
-database::impl::get_u1nm()
-{
-  if (!pu1nm)
-    pu1nm = (struct ucd_u1nm *)get_table(UCD_u1nm);
+GETTER(names, ucd_names,UCD_name)
+GETTER(u1nm, ucd_u1nm, UCD_u1nm)
+GETTER(isoc, ucd_isoc, UCD_isoc)
+GETTER(alis, ucd_alis, UCD_alis)
+GETTER(jamo, ucd_jamo, UCD_jamo)
+GETTER(genc, ucd_genc, UCD_genc)
+GETTER(numb, ucd_numb, UCD_numb)
+GETTER(ccc, ucd_ccc, UCD_ccc)
+GETTER(CASE, ucd_case, UCD_CASE)
+GETTER(case, ucd_case, UCD_case)
+GETTER(Case, ucd_case, UCD_Case)
+GETTER(csef, ucd_case, UCD_csef)
+GETTER(kccf, ucd_case, UCD_kccf)
+GETTER(nfkc, ucd_case, UCD_nfkc)
+GETTER(bidi, ucd_bidi, UCD_bidi)
+GETTER(deco, ucd_deco, UCD_deco)
+GETTER(mirr, ucd_mirr, UCD_mirr)
+GETTER(brak, ucd_brak, UCD_brak)
+GETTER(age, ucd_age, UCD_age)
+GETTER(scpt, ucd_scpt, UCD_scpt)
+GETTER(nfcqc, ucd_qc, UCD_cqc)
+GETTER(nfkcqc, ucd_qc, UCD_kcqc)
+GETTER(nfdqc, ucd_qc, UCD_dqc)
+GETTER(nfkdqc, ucd_qc, UCD_kdqc)
+GETTER(join, ucd_join, UCD_join)
+GETTER(lbrk, ucd_brk, UCD_lbrk)
+GETTER(gbrk, ucd_brk, UCD_gbrk)
+GETTER(sbrk, ucd_brk, UCD_sbrk)
+GETTER(wbrk, ucd_brk, UCD_wbrk)
+GETTER(eaw, ucd_eaw, UCD_eaw)
+GETTER(rads, ucd_rads, UCD_rads)
+GETTER(inmc, ucd_inc, UCD_inmc)
+GETTER(insc, ucd_inc, UCD_insc)
+GETTER(prmc, ucd_prmc, UCD_prmc)
 
-  return pu1nm;
+GETTER(jamn, ucd_n16, UCD_jamn)
+GETTER(gcn, ucd_n16, UCD_gcn)
+GETTER(cccn, ucd_n8, UCD_cccn)
+GETTER(numn, ucd_n8, UCD_numn)
+GETTER(bdin, ucd_n8, UCD_bdin)
+GETTER(decn, ucd_n8, UCD_decn)
+GETTER(lbkn, ucd_n8, UCD_lbkn)
+GETTER(gbkn, ucd_n8, UCD_gbkn)
+GETTER(sbkn, ucd_n8, UCD_sbkn)
+GETTER(wbkn, ucd_n8, UCD_wbkn)
+GETTER(eawn, ucd_n8, UCD_eawn)
+GETTER(imcn, ucd_n8, UCD_imcn)
+GETTER(iscn, ucd_n8, UCD_iscn)
+GETTER(scpn, ucd_n32, UCD_scpn)
+
+const struct ucd_n8 *
+database::impl::get_jtn() {
+  if (!pjtn)
+    pjtn = (struct ucd_n8 *)get_table(UCD_jonn);
+  return pjtn;
 }
 
-const struct ucd_isoc *
-database::impl::get_isoc()
-{
-  if (!pisoc)
-    pisoc = (struct ucd_isoc *)get_table(UCD_isoc);
-
-  return pisoc;
-}
-
-const struct ucd_alis *
-database::impl::get_aliases()
-{
-  if (!palis)
-    palis = (struct ucd_alis *)get_table(UCD_alis);
-
-  return palis;
-}
-
-const struct ucd_jamo *
-database::impl::get_jamo()
-{
-  if (!pjamo)
-    pjamo = (struct ucd_jamo *)get_table(UCD_jamo);
-
-  return pjamo;
-}
-
-const struct ucd_genc *
-database::impl::get_genc()
-{
-  if (!pgenc)
-    pgenc = (struct ucd_genc *)get_table(UCD_genc);
-
-  return pgenc;
-}
-
-const struct ucd_numb *
-database::impl::get_numb()
-{
-  if (!pnumb)
-    pnumb = (struct ucd_numb *)get_table(UCD_numb);
-
-  return pnumb;
-}
-
-const struct ucd_ccc *
-database::impl::get_ccc()
-{
-  if (!pccc)
-    pccc = (struct ucd_ccc *)get_table(UCD_ccc);
-
-  return pccc;
-}
-
-const struct ucd_case *
-database::impl::get_CASE()
-{
-  if (!pCASE)
-    pCASE = (struct ucd_case *)get_table(UCD_CASE);
-
-  return pCASE;
-}
-
-const struct ucd_case *
-database::impl::get_case()
-{
-  if (!pcase)
-    pcase = (struct ucd_case *)get_table(UCD_case);
-
-  return pcase;
-}
-
-const struct ucd_case *
-database::impl::get_Case()
-{
-  if (!pCase)
-    pCase = (struct ucd_case *)get_table(UCD_Case);
-
-  return pCase;
-}
-
-const struct ucd_case *
-database::impl::get_csef()
-{
-  if (!pcsef)
-    pcsef = (struct ucd_case *)get_table(UCD_csef);
-
-  return pcsef;
-}
-
-const struct ucd_case *
-database::impl::get_kccf()
-{
-  if (!pkccf)
-    pkccf = (struct ucd_case *)get_table(UCD_kccf);
-
-  return pkccf;
-}
-
-const struct ucd_case *
-database::impl::get_nfkc()
-{
-  if (!pnfkc)
-    pnfkc = (struct ucd_case *)get_table(UCD_nfkc);
-
-  return pnfkc;
-}
-
-const struct ucd_bidi *
-database::impl::get_bidi()
-{
-  if (!pbidi)
-    pbidi = (struct ucd_bidi *)get_table(UCD_bidi);
-
-  return pbidi;
-}
-
-const struct ucd_deco *
-database::impl::get_deco()
-{
-  if (!pdeco)
-    pdeco = (struct ucd_deco *)get_table(UCD_deco);
-
-  return pdeco;
-}
-
-const struct ucd_mirr *
-database::impl::get_mirr()
-{
-  if (!pmirr)
-    pmirr = (struct ucd_mirr *)get_table(UCD_mirr);
-
-  return pmirr;
-}
-
-const struct ucd_brak *
-database::impl::get_brak()
-{
-  if (!pbrak)
-    pbrak = (struct ucd_brak *)get_table(UCD_brak);
-
-  return pbrak;
-}
-
-const struct ucd_age *
-database::impl::get_age()
-{
-  if (!page)
-    page = (struct ucd_age *)get_table(UCD_age);
-
-  return page;
-}
-
-const struct ucd_scpt *
-database::impl::get_scpt()
-{
-  if (!pscpt)
-    pscpt = (struct ucd_scpt *)get_table(UCD_scpt);
-
-  return pscpt;
-}
-
-const struct ucd_scpn *
-database::impl::get_scpn()
-{
-  if (!pscpn)
-    pscpn = (struct ucd_scpn *)get_table(UCD_scpn);
-
-  return pscpn;
-}
-
-const struct ucd_qc *
-database::impl::get_nfcqc()
-{
-  if (!pnfcqc)
-    pnfcqc = (struct ucd_qc *)get_table(UCD_cqc);
-
-  return pnfcqc;
-}
-
-const struct ucd_qc *
-database::impl::get_nfkcqc()
-{
-  if (!pnfkcqc)
-    pnfkcqc = (struct ucd_qc *)get_table(UCD_kcqc);
-
-  return pnfkcqc;
-}
-
-const struct ucd_qc *
-database::impl::get_nfdqc()
-{
-  if (!pnfdqc)
-    pnfdqc = (struct ucd_qc *)get_table(UCD_dqc);
-
-  return pnfdqc;
-}
-
-const struct ucd_qc *
-database::impl::get_nfkdqc()
-{
-  if (!pnfkdqc)
-    pnfkdqc = (struct ucd_qc *)get_table(UCD_kdqc);
-
-  return pnfkdqc;
-}
-
-const struct ucd_join *
-database::impl::get_join()
-{
-  if (!pjoin)
-    pjoin = (struct ucd_join *)get_table(UCD_join);
-
-  return pjoin;
-}
-
-const struct ucd_brk *
-database::impl::get_lbrk()
-{
-  if (!plbrk)
-    plbrk = (struct ucd_brk *)get_table(UCD_lbrk);
-
-  return plbrk;
-}
-
-const struct ucd_brk *
-database::impl::get_gbrk()
-{
-  if (!pgbrk)
-    pgbrk = (struct ucd_brk *)get_table(UCD_gbrk);
-
-  return pgbrk;
-}
-
-const struct ucd_brk *
-database::impl::get_sbrk()
-{
-  if (!psbrk)
-    psbrk = (struct ucd_brk *)get_table(UCD_sbrk);
-
-  return psbrk;
-}
-
-const struct ucd_brk *
-database::impl::get_wbrk()
-{
-  if (!pwbrk)
-    pwbrk = (struct ucd_brk *)get_table(UCD_wbrk);
-
-  return pwbrk;
-}
-
-const struct ucd_eaw *
-database::impl::get_eaw()
-{
-  if (!peaw)
-    peaw = (struct ucd_eaw *)get_table(UCD_eaw);
-
-  return peaw;
-}
-
-const struct ucd_rads *
-database::impl::get_rads()
-{
-  if (!prads)
-    prads = (struct ucd_rads *)get_table(UCD_rads);
-
-  return prads;
-}
-
-const struct ucd_inc *
-database::impl::get_inmc()
-{
-  if (!pinmc)
-    pinmc = (struct ucd_inc *)get_table(UCD_inmc);
-
-  return pinmc;
-}
-
-const struct ucd_inc *
-database::impl::get_insc()
-{
-  if (!pinsc)
-    pinsc = (struct ucd_inc *)get_table(UCD_insc);
-
-  return pinsc;
-}
-
-const struct ucd_prmc *
-database::impl::get_prmc()
-{
-  if (!pprmc)
-    pprmc = (struct ucd_prmc *)get_table(UCD_prmc);
-
-  return pprmc;
+const struct ucd_n8 *
+database::impl::get_jgn() {
+  if (!pjgn) {
+    const uint8_t *ptr = (const uint8_t *)get_jtn();
+    ptr += (sizeof(struct ucd_n8)
+            + (pjtn->num_fwd + pjtn->num_rev) * sizeof(struct ucd_n8_entry));
+    pjgn = (const struct ucd_n8 *)ptr;
+  }
+  return pjgn;
 }
 
 void
@@ -611,70 +518,25 @@ database::emoji_version() const
   return version(uver >> 16, (uver >> 8) & 0xff, uver & 0xff);
 }
 
-enum {
-  LOOSE_IGNORE_MEDIAL = 1,
-  LOOSE_IGNORE_DASHES = 2
-};
-
-static bool
-char_is_space(char ch)
+std::string
+database::impl::strip(const std::string &s)
 {
-  return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
-}
+  std::string stripped;
 
-static int
-loose_match(const char *a, const char *aend, const char *b,
-            unsigned options=LOOSE_IGNORE_DASHES)
-{
-  bool ignore_dashes = options & LOOSE_IGNORE_DASHES;
-  bool ignore_medial = options & LOOSE_IGNORE_MEDIAL;
-  bool last_was_letter = false;
-
-  while (a != aend && *a && *b) {
-    if (ignore_medial && last_was_letter && a != aend && *a && *a == '-'
-        && aend - a > 1
-        && !char_is_space(a[1]) && a[1] != '_')
-      ++a;
-
-    while (a != aend && *a && (char_is_space(*a) || *a == '_'
-                               || (ignore_dashes && *a == '-')))
-      ++a;
-    if (a == aend || !*a)
+  for (auto it = s.begin(); it != s.end(); ++it) {
+    while (char_is_space(*it)
+           || *it == '_'
+           || *it == '-')
+      ++it;
+    if (it == s.end())
       break;
-
-    while (*b && (char_is_space(*b) || *b == '_'))
-      ++b;
-    if (!*b)
-      break;
-
-    char cha = *a++;
-    char chb = *b++;
-
-    if (cha >= 'A' && cha <= 'Z')
-      cha = cha - 'A' + 'a';
-    if (chb >= 'A' && chb <= 'Z')
-      chb = chb - 'A' + 'a';
-
-    if (cha < chb)
-      return -1;
-    if (cha > chb)
-      return +1;
-
-    if (ignore_medial)
-      last_was_letter = true;
+    char ch = *it;
+    if (ch >= 'A' && ch <= 'Z')
+      ch = ch - 'A' + 'a';
+    stripped += ch;
   }
 
-  while (a != aend && *a && (char_is_space(*a) || *a == '_'))
-    ++a;
-  while (*b && (char_is_space(*b) || *b == '_'))
-    ++b;
-
-  if (a != aend && *a)
-    return +1;
-  else if (*b)
-    return -1;
-  else
-    return 0;
+  return stripped;
 }
 
 codepoint
@@ -682,7 +544,7 @@ database::codepoint_from_name(const std::string &name,
                               unsigned allowed_types) const
 {
   const struct ucd_names *pnames = _pimpl->get_names();
-  const struct ucd_alis *palis = _pimpl->get_aliases();
+  const struct ucd_alis *palis = _pimpl->get_alis();
   const struct ucd_name_entry *entries;
   const char *cname = name.c_str();
 
@@ -968,7 +830,7 @@ std::vector<alias>
 database::name_alias(codepoint cp,
                      unsigned allowed_types) const
 {
-  const struct ucd_alis *palis = _pimpl->get_aliases();
+  const struct ucd_alis *palis = _pimpl->get_alis();
   std::vector<alias> result;
 
   if (!palis)
@@ -2112,113 +1974,6 @@ database::script_extensions(codepoint cp) const
   return result;
 }
 
-sc
-database::script_from_name(const std::string &name) const
-{
-  const struct ucd_scpn *pscpn = _pimpl->get_scpn();
-  std::string stripped;
-  const struct ucd_scpn_entry *entries;
-
-  // Cope with arbitrary fourcc names
-  if (name.size() == 4) {
-    sc script = 0;
-    unsigned n;
-
-    for (n = 0; n < 4; ++n) {
-      char ch = name[n];
-
-      if ((ch < 'a' || ch > 'z')
-          && (ch < 'A' || ch > 'Z'))
-        break;
-
-      if (n == 0)
-        ch &= ~0x20;
-      else
-        ch |= 0x20;
-
-      script = (script << 8) | ch;
-    }
-
-    if (n == 4) {
-      if (script == 'Qaac')
-        script = ucd::SC::Copt;
-      else if (script == 'Qaai')
-        script = ucd::SC::Zinh;
-
-      return script;
-    }
-  }
-
-  // Otherwise, search the table
-  for (auto it = name.begin(); it != name.end(); ++it) {
-    while (char_is_space(*it)
-           || *it == '_'
-           || *it == '-')
-      ++it;
-    if (it == name.end())
-      break;
-    char ch = *it;
-    if (ch >= 'A' && ch <= 'Z')
-      ch = ch - 'A' + 'a';
-    stripped += ch;
-  }
-
-  const char *nstr = stripped.c_str();
-
-  entries = pscpn->names + pscpn->num_names;
-
-  uint32_t min = 0, max = pscpn->num_names, mid;
-
-  while (min < max) {
-    mid = (min + max) / 2;
-
-    uint32_t sid = entries[mid].name;
-    size_t max_len;
-    const char *nameptr = _pimpl->get_strptr_unsafe(sid, max_len);
-    const char *nameend = nameptr + max_len;
-
-    int ret = loose_match(nameptr, nameend, nstr, LOOSE_IGNORE_DASHES);
-
-    if (ret > 0)
-      max = mid;
-    else if (ret < 0)
-      min = mid + 1;
-    else
-      return entries[mid].script;
-  }
-
-  return ucd::SC::bad_script;
-}
-
-std::string
-database::name_from_script(sc script) const
-{
-  const struct ucd_scpn *pscpn = _pimpl->get_scpn();
-
-  uint32_t min = 0, max = pscpn->num_names, mid;
-
-  while (min < max) {
-    mid = (min + max) / 2;
-
-    sc s = pscpn->names[mid].script;
-    if (s > script)
-      max = mid;
-    else if (s < script)
-      min = mid + 1;
-    else
-      return _pimpl->get_string(pscpn->names[mid].name);
-  }
-
-  char buf[5];
-  for (unsigned n = 0; n < 4; ++n) {
-    char ch = char(script >> (8 * (3 - n)));
-    buf[n] = ch;
-  }
-  buf[4] = 0;
-
-  return buf;
-}
-
 static maybe
 get_qc(const struct ucd_qc *pqc, codepoint cp) {
   unsigned min = 0, max = pqc->num_entries - 1, mid;
@@ -2529,3 +2284,275 @@ database::m(codepoint cp) const                                 \
   return get_binprop(pbp, cp);                                  \
 }
 #include "ucd-binprops.h"
+
+#define NAME_FNS(prop,table,size,type)                                  \
+bool                                                                    \
+database::prop##_from_name(const std::string &name, type &v) const      \
+{                                                                       \
+  auto *ptbl = _pimpl->get_##table();                                   \
+  uint##size##_t result;                                                \
+                                                                        \
+  if (_pimpl->search(ptbl, name, result)) {                             \
+    v = type(result);                                                   \
+    return true;                                                        \
+  }                                                                     \
+                                                                        \
+  return false;                                                         \
+}                                                                       \
+                                                                        \
+std::string                                                             \
+database::name_from_##prop(type v) const                                \
+{                                                                       \
+  const struct ucd_n##size *ptbl = _pimpl->get_##table();               \
+  std::string result;                                                   \
+                                                                        \
+  if (!_pimpl->search(ptbl,                                             \
+                      uint##size##_t(v),                                \
+                      result))                                          \
+    return "<unknown>";                                                 \
+                                                                        \
+  return result;                                                        \
+}
+
+bool
+database::general_category_from_name(const std::string &name, gc &result) const
+{
+  // Cope with arbitrary twocc names
+  if (name.size() == 2) {
+    gc cat = 0;
+    unsigned n;
+
+    for (n = 0; n < 2; ++n) {
+      char ch = name[n];
+
+      if ((ch < 'a' || ch > 'z')
+          && (ch < 'A' || ch > 'Z'))
+        break;
+
+      if (n == 0)
+        ch &= ~0x20;
+      else
+        ch |= 0x20;
+
+      cat = (cat << 8) | ch;
+    }
+
+    if (n == 2) {
+      result = cat;
+      return true;
+    }
+  }
+
+  const struct ucd_n16 *pgcn = _pimpl->get_gcn();
+  uint16_t ures;
+
+  if (_pimpl->search(pgcn, name, ures)) {
+    result = gc(ures);
+    return true;
+  }
+
+  return false;
+}
+
+std::string
+database::name_from_general_category(gc c) const
+{
+  const struct ucd_n16 *pgcn = _pimpl->get_gcn();
+  std::string result;
+
+  if (!_pimpl->search(pgcn, uint16_t(c), result)) {
+    char ch[3];
+    ch[0] = (c >> 8) & 0xff;
+    ch[1] = c & 0xff;
+    ch[2] = 0;
+    return ch;
+  }
+
+  return result;
+}
+
+bool
+database::canonical_combining_class_from_name(const std::string &name,
+                                              ccc &result) const
+{
+  const char *pname = name.c_str();
+
+  if ((pname[0] == 'C' || pname[0] == 'c')
+      && (pname[1] == 'C' || pname[1] == 'c')
+      && (pname[2] == 'C' || pname[2] == 'c')) {
+    unsigned n;
+    if (std::sscanf(pname + 3, "%u", &n) == 1 && n < 256) {
+      result = ccc(n);
+      return true;
+    }
+  }
+
+  const struct ucd_n8 *pcccn = _pimpl->get_cccn();
+  uint8_t ures;
+
+  if (_pimpl->search(pcccn, name, ures)) {
+    result = ccc(ures);
+    return true;
+  }
+
+  return false;
+}
+
+std::string
+database::name_from_canonical_combining_class(ccc c) const
+{
+  const struct ucd_n8 *pcccn = _pimpl->get_cccn();
+  std::string result;
+
+  if (!_pimpl->search(pcccn, uint8_t(c), result)) {
+    char buf[8];
+    std::sprintf(buf, "CCC%u", c);
+    return buf;
+  }
+
+  return result;
+}
+
+static struct {
+  const char *name;
+  bpt         bpt;
+} bpt_names[] = { { "n", bpt::n },
+                  { "o", bpt::o },
+                  { "c", bpt::c },
+                  { "None", bpt::None },
+                  { "Open", bpt::Open },
+                  { "Close", bpt::Close } };
+
+bool
+database::bidi_paired_bracket_type_from_name(const std::string &name,
+                                             bpt &t) const
+{
+  std::string name_st = _pimpl->strip(name);
+  const char *nptr = name_st.c_str();
+
+  for (unsigned n = 0; n < sizeof(bpt_names) / sizeof(bpt_names[0]); ++n) {
+    if (loose_match(bpt_names[n].name, NULL, nptr) == 0) {
+      t = bpt_names[n].bpt;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+std::string
+database::name_from_bidi_paired_bracket_type(bpt t) const
+{
+  if (t > bpt::c)
+    return "<unknown>";
+  return bpt_names[unsigned(t)].name;
+}
+
+bool
+database::decomposition_type_from_name(const std::string &name,
+                                       dt &t) const
+{
+  auto *ptbl = _pimpl->get_decn();
+  uint8_t result;
+
+  if (_pimpl->search(ptbl, name, result)) {
+    if (result == 0xff)
+      t = dt::None;
+    else
+      t = dt(result);
+    return true;
+  }
+
+  return false;
+}
+
+std::string
+database::name_from_decomposition_type(dt t) const
+{
+  auto *ptbl = _pimpl->get_decn();
+  std::string result;
+
+  if (!_pimpl->search(ptbl, uint8_t(t), result))
+    return "<unknown>";
+
+  return result;
+}
+
+NAME_FNS(hangul_syllable_type, jamn, 16, hst)
+NAME_FNS(numeric_type, numn, 8, nt)
+NAME_FNS(bidi_class, bdin, 8, bc)
+NAME_FNS(east_asian_width, eawn, 8, ea)
+NAME_FNS(indic_positional_category, imcn, 8, InPC)
+NAME_FNS(indic_syllabic_category, iscn, 8, InSC)
+NAME_FNS(joining_type, jtn, 8, jt)
+NAME_FNS(joining_group, jgn, 8, jg)
+NAME_FNS(line_break, lbkn, 8, lb)
+NAME_FNS(grapheme_cluster_break, gbkn, 8, GCB)
+NAME_FNS(sentence_break, sbkn, 8, SB)
+NAME_FNS(word_break, wbkn, 8, WB)
+
+bool
+database::script_from_name(const std::string &name, sc &result) const
+{
+  // Cope with arbitrary fourcc names
+  if (name.size() == 4) {
+    sc script = 0;
+    unsigned n;
+
+    for (n = 0; n < 4; ++n) {
+      char ch = name[n];
+
+      if ((ch < 'a' || ch > 'z')
+          && (ch < 'A' || ch > 'Z'))
+        break;
+
+      if (n == 0)
+        ch &= ~0x20;
+      else
+        ch |= 0x20;
+
+      script = (script << 8) | ch;
+    }
+
+    if (n == 4) {
+      if (script == 'Qaac')
+        script = ucd::SC::Copt;
+      else if (script == 'Qaai')
+        script = ucd::SC::Zinh;
+
+      result = script;
+      return true;
+    }
+  }
+
+  // Otherwise, search the table
+  const struct ucd_n32 *pscpn = _pimpl->get_scpn();
+  uint32_t ures;
+
+  if (_pimpl->search(pscpn, name, ures)) {
+    result = sc(ures);
+    return true;
+  }
+
+  return false;
+}
+
+std::string
+database::name_from_script(sc script) const
+{
+  const struct ucd_n32 *pscpn = _pimpl->get_scpn();
+  std::string result;
+
+  if (!_pimpl->search(pscpn, script, result)) {
+    char ch[5];
+    ch[0] = script >> 24;
+    ch[1] = script >> 16;
+    ch[2] = script >> 8;
+    ch[3] = script;
+    ch[4] = 0;
+    return ch;
+  }
+
+  return result;
+}
+

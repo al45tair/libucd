@@ -97,9 +97,9 @@ TEST_CASE("we can obtain case folding data", "[casefold]") {
 
   SECTION("simple case folding") {
     REQUIRE(db.simple_case_folding('A') == codepoint('a'));
-    REQUIRE(db.simple_case_folding(0xc1) == 0xe1);
-    REQUIRE(db.simple_case_folding(0x1e9e) == 0xdf);
-    REQUIRE(db.simple_case_folding(0x1f9f) == 0x1f97);
+    REQUIRE(db.simple_case_folding(0xc1) == 0xe1u);
+    REQUIRE(db.simple_case_folding(0x1e9e) == 0xdfu);
+    REQUIRE(db.simple_case_folding(0x1f9f) == 0x1f97u);
   }
 
   SECTION("full case folding") {
@@ -111,7 +111,7 @@ TEST_CASE("we can obtain case folding data", "[casefold]") {
     REQUIRE(ok);
 
     out = db.case_folding(0xc1);
-    ok = out.size() == 1 && out[0] == 0xe1;
+    ok = out.size() == 1 && out[0] == char32_t(0xe1);
     REQUIRE(ok);
 
     out = db.case_folding(0x1e9e);
@@ -119,7 +119,8 @@ TEST_CASE("we can obtain case folding data", "[casefold]") {
     REQUIRE(ok);
 
     out = db.case_folding(0x1f9f);
-    ok = out.size() == 2 && out[0] == 0x1f27 && out[1] == 0x03b9;
+    ok = (out.size() == 2 && out[0] == char32_t(0x1f27) 
+          && out[1] == char32_t(0x03b9));
     REQUIRE(ok);
   }
 }

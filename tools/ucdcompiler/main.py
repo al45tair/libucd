@@ -35,6 +35,7 @@ UCD_u1nm = fourcc('u1nm')
 UCD_isoc = fourcc('isoc')
 UCD_alis = fourcc('alis')
 UCD_genc = fourcc('genc')
+UCD_gcn  = fourcc('gc$ ')
 UCD_CASE = fourcc('CASE')
 UCD_case = fourcc('case')
 UCD_Case = fourcc('Case')
@@ -42,28 +43,41 @@ UCD_csef = fourcc('csef')
 UCD_kccf = fourcc('kccf')
 UCD_nfkc = fourcc('nfkc')
 UCD_ccc = fourcc('ccc ')
+UCD_cccn = fourcc('ccc$')
 UCD_jamo = fourcc('jamo')
+UCD_jamn = fourcc('jmo$')
 UCD_numb = fourcc('numb')
+UCD_numn = fourcc('num$')
 UCD_bidi = fourcc('bidi')
+UCD_bdin = fourcc('bdi$')
 UCD_mirr = fourcc('mirr')
 UCD_brak = fourcc('brak')
 UCD_deco = fourcc('deco')
+UCD_decn = fourcc('dec$')
 UCD_age = fourcc('age ')
 UCD_scpt = fourcc('scpt')
-UCD_scpn = fourcc('scpn')
+UCD_scpn = fourcc('scp$')
 UCD_cqc = fourcc('cqc ')
 UCD_kcqc = fourcc('kcqc')
 UCD_dqc = fourcc('dqc ')
 UCD_kdqc = fourcc('kdqc')
 UCD_join = fourcc('join')
+UCD_jonn = fourcc('jon$')
 UCD_lbrk = fourcc('lbrk')
 UCD_gbrk = fourcc('gbrk')
 UCD_sbrk = fourcc('sbrk')
 UCD_wbrk = fourcc('wbrk')
+UCD_lbkn = fourcc('lbk$')
+UCD_gbkn = fourcc('gbk$')
+UCD_sbkn = fourcc('sbk$')
+UCD_wbkn = fourcc('wbk$')
 UCD_eaw = fourcc('eaw ')
+UCD_eawn = fourcc('eaw$')
 UCD_rads = fourcc('rads')
 UCD_inmc = fourcc('inmc')
 UCD_insc = fourcc('insc')
+UCD_imcn = fourcc('imc$')
+UCD_iscn = fourcc('isc$')
 UCD_prmc = fourcc('prmc')
 
 binprop_tables = [
@@ -205,6 +219,89 @@ UCD_JOIN_TYPE_RIGHT        = 2
 UCD_JOIN_TYPE_LEFT         = 3
 UCD_JOIN_TYPE_DUAL         = 4
 UCD_JOIN_TYPE_JOIN_CAUSING = 5
+
+nt_map = {
+    'De': (UCD_NUMERIC_TYPE_DECIMAL >> 24),
+    'Di': (UCD_NUMERIC_TYPE_DIGIT >> 24),
+    'None': 0,
+    'Nu': (UCD_NUMERIC_TYPE_NUMERIC >> 24)
+}
+
+bidi_classmap = {
+    'L': 1,
+    'R': 2,
+    'AL': 3,
+    'EN': 4,
+    'ES': 5,
+    'ET': 6,
+    'AN': 7,
+    'CS': 8,
+    'NSM': 9,
+    'BN': 10,
+    'B': 11,
+    'S': 12,
+    'WS': 13,
+    'ON': 14,
+    'LRE': 15,
+    'LRO': 16,
+    'RLE': 17,
+    'RLO': 18,
+    'PDF': 19,
+    'LRI': 20,
+    'RLI': 21,
+    'FSI': 22,
+    'PDI': 23
+}
+
+hst_map = {
+    'NA': 0,
+    'L': 1,
+    'V': 2,
+    'T': 4,
+    'LV': 3,
+    'LVT': 7
+}
+
+deco_dtmap = {
+    'None': 255,
+    'Can': 0,
+    'Font': 1,
+    'Nb': 2,
+    'Init': 3,
+    'Med': 4,
+    'Fin': 5,
+    'Iso': 6,
+    'Enc': 7,
+    'Sup': 8,
+    'Sub': 9,
+    'Vert': 10,
+    'Wide': 11,
+    'Nar': 12,
+    'Sml': 13,
+    'Sqr': 14,
+    'Fra': 15,
+    'Com': 16,
+}
+
+deco_tagmap = {
+    '<font>': 1,
+    '<noBreak>': 2,
+    '<initial>': 3,
+    '<medial>': 4,
+    '<final>': 5,
+    '<isolated>': 6,
+    '<circle>': 7,
+    '<super>': 8,
+    '<sub>': 9,
+    '<vertical>': 10,
+    '<wide>': 11,
+    '<narrow>': 12,
+    '<small>': 13,
+    '<square>': 14,
+    '<fraction>': 15,
+    '<compat>': 16
+}
+
 
 joining_type_map = {
     'R': UCD_JOIN_TYPE_RIGHT,
@@ -453,7 +550,7 @@ inmc_map = {
     'Top_And_Left': 10,
     'Top_And_Left_And_Right': 11,
     'Top_And_Right': 12,
-    'Visual_Order_Left': 13    
+    'Visual_Order_Left': 13
 }
 
 insc_map = {
@@ -523,7 +620,7 @@ def gen_name_table(forward, reverse, special_ranges):
                             for f, l, k in name_ranges])
 
     print('There are %s names' % len(forward))
-    
+
     return b''.join([struct.pack(b'=I', len(forward)),
                      fwd_data,
                      rev_data,
@@ -939,7 +1036,7 @@ def gen_jamo_table(hst):
         cur_base = base
         prev_start = None
         prev_m = None
-        
+
         for ofs,m in enumerate(mapped):
             cp = base + ofs
             # We treat LV and LVT together; we can distinguish them because
@@ -953,13 +1050,7 @@ def gen_jamo_table(hst):
                 prev_m = m
         ranges.append((prev_start, cp, prev_m))
 
-    lvt_map = { 'L': 1,
-                'V': 2,
-                'T': 4,
-                'LV': 6,
-                'LVT': 7 }
-        
-    jrdata = b''.join([struct.pack(b'=HHH', f, l, lvt_map[k])
+    jrdata = b''.join([struct.pack(b'=HHH', f, l, hst_map[k])
                        for f, l, k in ranges])
 
     return b''.join([struct.pack(b'=I', len(ranges)),
@@ -1024,33 +1115,7 @@ def gen_bidi_table(bidiclass):
         last_cp = cp
     entries.append((0x110000, 'L'))
     
-    classmap = {
-        'L': 1,
-        'R': 2,
-        'AL': 3,
-        'EN': 4,
-        'ES': 5,
-        'ET': 6,
-        'AN': 7,
-        'CS': 8,
-        'NSM': 9,
-        'BN': 10,
-        'B': 11,
-        'S': 12,
-        'WS': 13,
-        'ON': 14,
-        'LRE': 15,
-        'LRO': 16,
-        'RLE': 17,
-        'RLO': 18,
-        'PDF': 19,
-        'LRI': 20,
-        'RLI': 21,
-        'FSI': 22,
-        'PDI': 23
-        }
-
-    classdata = b''.join([struct.pack(b'=I', cp | (classmap[c] << 24))
+    classdata = b''.join([struct.pack(b'=I', cp | (bidi_classmap[c] << 24))
                           for cp, c in entries])
 
     return b''.join([struct.pack(b'=I', len(entries)),
@@ -1070,24 +1135,7 @@ def to_utf16(items):
 
 def gen_deco_table(deco):
     "Generate the deco table, which holds character decompositions."
-    tagmap = {
-        '<font>': 1,
-        '<noBreak>': 2,
-        '<initial>': 3,
-        '<medial>': 4,
-        '<final>': 5,
-        '<isolated>': 6,
-        '<circle>': 7,
-        '<super>': 8,
-        '<sub>': 9,
-        '<vertical>': 10,
-        '<wide>': 11,
-        '<narrow>': 12,
-        '<small>': 13,
-        '<square>': 14,
-        '<fraction>': 15,
-        '<compat>': 16
-        }
+    global deco_tagmap
 
     deco_entries = []
     deco_data = []
@@ -1096,15 +1144,15 @@ def gen_deco_table(deco):
         tag,items = d
         if len(items) == 1:
             entry = struct.pack(b'=IBBI', cp,
-                                UCD_DECO_RANGE_SINGLE, tagmap.get(tag, 0),
+                                UCD_DECO_RANGE_SINGLE, deco_tagmap.get(tag, 0),
                                 items[0])
         elif len(items) == 2 and items[0] <= 0xffff and items[1] <= 0xffff:
             entry = struct.pack(b'=IBBHH', cp,
-                                UCD_DECO_RANGE_PACKED, tagmap.get(tag, 0),
+                                UCD_DECO_RANGE_PACKED, deco_tagmap.get(tag, 0),
                                 items[0], items[1])
         else:
             entry = struct.pack(b'=IBBI', cp,
-                                UCD_DECO_RANGE_EXTERNAL, tagmap.get(tag, 0),
+                                UCD_DECO_RANGE_EXTERNAL, deco_tagmap.get(tag, 0),
                                 dofs)
             chunk = b''.join([struct.pack(b'=H', cu) for cu in to_utf16(items)]
                              + [b'\0\0'])
@@ -1246,12 +1294,13 @@ def gen_script_table(scripts, scriptexts):
                     + fixed_entries
                     + extdata)
 
-def gen_script_name_table(forward, reverse):
-    """Generate the script name table."""
-    fwd_data = b''.join([struct.pack(b'=II', cp, sid) for cp, sid in forward])
-    rev_data = b''.join([struct.pack(b'=II', cp, sid) for n, cp, sid in reverse])
+def gen_value_name_table(valtype, forward, reverse):
+    """Generate a value name table."""
+    fmt = b'=' + valtype + b'I'
+    fwd_data = b''.join([struct.pack(fmt, v, sid) for v, sid in forward])
+    rev_data = b''.join([struct.pack(fmt, v, sid) for n, v, sid in reverse])
 
-    return b''.join([struct.pack(b'=I', len(forward)),
+    return b''.join([struct.pack(b'=II', len(forward), len(reverse)),
                      fwd_data,
                      rev_data])
 
@@ -1386,7 +1435,7 @@ class StringTableGenerator (object):
 
     def as_table(self):
         return struct.pack(b'=I', self.next_sid) + b'\0'.join(self.strings)
-    
+
 def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     if emoji_path:
         print('Building Unicode data for version %s with emoji version %s\n' % (
@@ -1403,6 +1452,8 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     alias_reverse = []
     catranges = []
     catrange = None
+    gc_forward = []
+    gc_reverse = []
     u1names = []
     isocomments = []
     ucase = SparseArray()
@@ -1412,12 +1463,22 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     nfkc_fc = SparseArray()
     nfkc_closure = SparseArray()
     ccc = SparseArray()
+    ccc_forward = []
+    ccc_reverse = []
     hst = SparseArray()
+    hst_forward = []
+    hst_reverse = []
     numeric = SparseArray()
+    nt_forward = []
+    nt_reverse = []
     bidiclass = SparseArray()
+    bc_forward = []
+    bc_reverse = []
     bidimirr = SparseArray()
     bidimglyph = SparseArray()
     deco = SparseArray()
+    dt_forward = []
+    dt_reverse = []
     ages = SparseArray()
     versions = set()
     scripts = SparseArray()
@@ -1434,14 +1495,32 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     kdqc = SparseArray()
     brakdata = []
     joining = []
+    jt_forward = []
+    jt_reverse = []
+    jg_forward = []
+    jg_reverse = []
     linebreak = SparseArray()
     gcbreak = SparseArray()
     sbreak = SparseArray()
     wbreak = SparseArray()
+    lb_forward = []
+    gcb_forward = []
+    sb_forward = []
+    wb_forward = []
+    lb_reverse = []
+    gcb_reverse = []
+    sb_reverse = []
+    wb_reverse = []
     eawidth = SparseArray()
+    ea_forward = []
+    ea_reverse = []
     radstroke = SparseArray()
     inmcat = SparseArray()
+    inmc_forward = []
+    inmc_reverse = []
     inscat = SparseArray()
+    insc_forward = []
+    insc_reverse = []
 
     range_re = re.compile(r'([A-Fa-f0-9]{4,6})\.\.([A-Fa-f0-9]{4,6})')
     special_re = re.compile(r'<(.+), (First|Last)>')
@@ -1866,12 +1945,6 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
                     scriptmap[alias] = fields[1]
                 scriptmap[fields[1]] = fields[1]
 
-                scpt = fourcc(fields[1])
-                name = fields[2].encode('ascii')
-                sid = strings.add(name)
-                script_forward.append((scpt, sid))
-                script_reverse.append((name, scpt, sid))
-
         # Read the Script property
         with ucd_zip.open('Scripts.txt', 'r') as sdata:
             for line in sdata:
@@ -1992,7 +2065,190 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
 
         with ucd_zip.open('IndicSyllabicCategory.txt', 'r') as isdata:
             read_category_data(isdata, inscat, insc_map)
-        
+
+        # Add some special values for General Category
+        any_sid = strings.add(b'Any')
+        assigned_sid = strings.add(b'Assigned')
+        ascii_sid = strings.add(b'ASCII')
+        lc_sid = strings.add(b'LC')
+        gc_forward.append((0xffff, any_sid))
+        gc_reverse.append((b'Any', 0xffff, any_sid))
+        gc_forward.append((0xfffe, assigned_sid))
+        gc_reverse.append((b'Assigned', 0xfffe, assigned_sid))
+        gc_forward.append((0xfffd, ascii_sid))
+        gc_reverse.append((b'ASCII', 0xfffd, any_sid))
+        gc_forward.append((0xfffc, lc_sid))
+        gc_reverse.append((b'LC', 0xfffc, lc_sid))
+
+        # Property values and aliases
+        with ucd_zip.open('PropertyValueAliases.txt', 'r') as pvadata:
+            for line in pvadata:
+                line = line.decode('utf-8')
+                line = line.split('#', 1)[0].strip()
+                if not line:
+                    continue
+
+                fields = [f.strip() for f in line.split(';')]
+
+                if fields[0] == 'bc':
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    val = bidi_classmap[fields[1]]
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    bc_forward.append((val, nsid))
+                    bc_reverse.append((short, val, ssid))
+                    if short != name:
+                        bc_reverse.append((name, val, nsid))
+                elif fields[0] == 'ccc':
+                    val = int(fields[1])
+                    short = fields[2].encode('ascii')
+                    name = fields[3].encode('ascii')
+                    if fields[2].startswith('CCC'):
+                        continue
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    ccc_forward.append((val, nsid))
+                    ccc_reverse.append((short, val, ssid))
+                    if short != name:
+                        ccc_reverse.append((name, val, nsid))
+                elif fields[0] == 'dt':
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    val = deco_dtmap[fields[1]]
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    dt_forward.append((val, nsid))
+                    dt_reverse.append((short, val, ssid))
+                    if short != name:
+                        dt_reverse.append((name, val, nsid))
+                elif fields[0] == 'ea':
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    val = eaw_map[fields[1]]
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    ea_forward.append((val, nsid))
+                    ea_reverse.append((short, val, ssid))
+                    if short != name:
+                        ea_reverse.append((name, val, nsid))
+                elif fields[0] == 'gc':
+                    val = fields[1]
+                    if len(val) == 1:
+                        val += '\0'
+                    val = twocc(val)
+                    name = fields[2].encode('ascii')
+                    sid = strings.add(name)
+                    gc_forward.append((val, sid))
+                    gc_reverse.append((name, val, sid))
+                elif fields[0] == 'GCB':
+                    val = gbreak_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    gcb_forward.append((val, nsid))
+                    gcb_reverse.append((short, val, ssid))
+                    if short != name:
+                        gcb_reverse.append((name, val, nsid))
+                elif fields[0] == 'hst':
+                    val = hst_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    hst_forward.append((val, nsid))
+                    hst_reverse.append((short, val, ssid))
+                    if short != name:
+                        hst_reverse.append((name, val, nsid))
+                elif fields[0] == 'InPC':
+                    val = inmc_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    inmc_forward.append((val, nsid))
+                    inmc_reverse.append((short, val, ssid))
+                    if short != name:
+                        inmc_reverse.append((name, val, nsid))
+                elif fields[0] == 'InSC':
+                    val = insc_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    insc_forward.append((val, nsid))
+                    insc_reverse.append((short, val, ssid))
+                    if short != name:
+                        insc_reverse.append((name, val, nsid))
+                elif fields[0] == 'jg':
+                    val = joining_group_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    jg_forward.append((val, nsid))
+                    jg_reverse.append((short, val, ssid))
+                    if short != name:
+                        jg_reverse.append((name, val, nsid))
+                elif fields[0] == 'jt':
+                    val = joining_type_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    jt_forward.append((val, nsid))
+                    jt_reverse.append((short, val, ssid))
+                    if short != name:
+                        jt_reverse.append((name, val, nsid))
+                elif fields[0] == 'lb':
+                    val = lbreak_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    lb_forward.append((val, nsid))
+                    lb_reverse.append((short, val, ssid))
+                    if short != name:
+                        lb_reverse.append((name, val, nsid))
+                elif fields[0] == 'nt':
+                    val = nt_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    nt_forward.append((val, nsid))
+                    nt_reverse.append((short, val, ssid))
+                    if short != name:
+                        nt_reverse.append((name, val, nsid))
+                elif fields[0] == 'sc':
+                    scpt = fourcc(fields[1])
+                    name = fields[2].encode('ascii')
+                    sid = strings.add(name)
+                    script_forward.append((scpt, sid))
+                    script_reverse.append((name, scpt, sid))
+                elif fields[0] == 'SB':
+                    val = sbreak_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    sb_forward.append((val, nsid))
+                    sb_reverse.append((short, val, ssid))
+                    if short != name:
+                        sb_reverse.append((name, val, nsid))
+                elif fields[0] == 'WB':
+                    val = wbreak_map[fields[1]]
+                    short = fields[1].encode('ascii')
+                    name = fields[2].encode('ascii')
+                    ssid = strings.add(short)
+                    nsid = strings.add(name)
+                    wb_forward.append((val, nsid))
+                    wb_reverse.append((short, val, ssid))
+                    if short != name:
+                        wb_reverse.append((name, val, nsid))
+
+
     if catrange:
         catranges.append(catrange)
         catranges.append((prev_cp + 1, 'Cn'))
@@ -2003,7 +2259,37 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     alias_reverse.sort(key=loose_key)
     script_forward.sort()
     script_reverse.sort(key=loose_key)
-    
+    bc_forward.sort()
+    bc_reverse.sort(key=loose_key)
+    ccc_forward.sort()
+    ccc_reverse.sort(key=loose_key)
+    dt_forward.sort()
+    dt_reverse.sort(key=loose_key)
+    ea_forward.sort()
+    ea_reverse.sort(key=loose_key)
+    gc_forward.sort()
+    gc_reverse.sort(key=loose_key)
+    gcb_forward.sort()
+    gcb_reverse.sort(key=loose_key)
+    hst_forward.sort()
+    hst_reverse.sort(key=loose_key)
+    inmc_forward.sort()
+    inmc_reverse.sort(key=loose_key)
+    insc_forward.sort()
+    insc_reverse.sort(key=loose_key)
+    jg_forward.sort()
+    jg_reverse.sort(key=loose_key)
+    jt_forward.sort()
+    jt_reverse.sort(key=loose_key)
+    lb_forward.sort()
+    lb_reverse.sort(key=loose_key)
+    nt_forward.sort()
+    nt_reverse.sort(key=loose_key)
+    sb_forward.sort()
+    sb_reverse.sort(key=loose_key)
+    wb_forward.sort()
+    wb_reverse.sort(key=loose_key)
+
     # Now scan the Unihan database
     with zipfile.ZipFile(os.path.join(ucd_path, 'Unihan.zip'), 'r') as unihan_zip:
         with unihan_zip.open('Unihan_NumericValues.txt', 'r') as nvdata:
@@ -2091,6 +2377,23 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     for cp,fce in bp.items():
         del primc[cp]
 
+    gcn_tab = gen_value_name_table(b'H', gc_forward, gc_reverse)
+    bdin_tab = gen_value_name_table(b'B', bc_forward, bc_reverse)
+    cccn_tab = gen_value_name_table(b'B', ccc_forward, ccc_reverse)
+    decn_tab = gen_value_name_table(b'B', dt_forward, dt_reverse)
+    eawn_tab = gen_value_name_table(b'B', ea_forward, ea_reverse)
+    gbkn_tab = gen_value_name_table(b'B', gcb_forward, gcb_reverse)
+    jamn_tab = gen_value_name_table(b'H', hst_forward, hst_reverse)
+    imcn_tab = gen_value_name_table(b'B', inmc_forward, inmc_reverse)
+    iscn_tab = gen_value_name_table(b'B', insc_forward, insc_reverse)
+    jonn_tab = (gen_value_name_table(b'B', jt_forward, jt_reverse)
+                + gen_value_name_table(b'B', jg_forward, jg_reverse))
+    lbkn_tab = gen_value_name_table(b'B', lb_forward, lb_reverse)
+    numn_tab = gen_value_name_table(b'B', nt_forward, nt_reverse)
+    scpn_tab = gen_value_name_table(b'I', script_forward, script_reverse)
+    sbkn_tab = gen_value_name_table(b'B', sb_forward, sb_reverse)
+    wbkn_tab = gen_value_name_table(b'B', wb_forward, wb_reverse)
+
     name_tab = gen_name_table(forward, reverse, special_ranges)
     u1nm_tab = gen_string_table(u1names)
     isoc_tab = gen_string_table(isocomments)
@@ -2115,7 +2418,6 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     brak_tab = gen_brak_table(brakdata)
     age_tab = gen_age_table(versions, ages)
     scpt_tab = gen_script_table(scripts, scriptexts)
-    scpn_tab = gen_script_name_table(script_forward, script_reverse)
     
     cqc_tab = gen_qc_table(cqc)
     kcqc_tab = gen_qc_table(kcqc)
@@ -2144,6 +2446,7 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
         (UCD_alis, len(alis_tab)),
         (UCD_strn, len(strings_tab)),
         (UCD_genc, 4 + 6 * len(catranges) + 6),
+        (UCD_gcn, len(gcn_tab)),
         (UCD_CASE, len(ucase_tab)),
         (UCD_case, len(lcase_tab)),
         (UCD_Case, len(tcase_tab)),
@@ -2151,10 +2454,15 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
         (UCD_kccf, len(nfkc_cf_tab)),
         (UCD_nfkc, len(nfkc_clo_tab)),
         (UCD_ccc, len(ccc_tab)),
+        (UCD_cccn, len(cccn_tab)),
         (UCD_jamo, len(jamo_tab)),
+        (UCD_jamn, len(jamn_tab)),
         (UCD_numb, len(numb_tab)),
+        (UCD_numn, len(numn_tab)),
         (UCD_bidi, len(bidi_tab)),
+        (UCD_bdin, len(bdin_tab)),
         (UCD_deco, len(deco_tab)),
+        (UCD_decn, len(decn_tab)),
         (UCD_mirr, len(mirr_tab)),
         (UCD_brak, len(brak_tab)),
         (UCD_age, len(age_tab)),
@@ -2165,14 +2473,22 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
         (UCD_dqc, len(dqc_tab)),
         (UCD_kdqc, len(kdqc_tab)),
         (UCD_join, len(join_tab)),
+        (UCD_jonn, len(jonn_tab)),
         (UCD_lbrk, len(lbrk_tab)),
+        (UCD_lbkn, len(lbkn_tab)),
         (UCD_gbrk, len(gbrk_tab)),
+        (UCD_gbkn, len(gbkn_tab)),
         (UCD_sbrk, len(sbrk_tab)),
+        (UCD_sbkn, len(sbkn_tab)),
         (UCD_wbrk, len(wbrk_tab)),
+        (UCD_wbkn, len(wbkn_tab)),
         (UCD_eaw, len(eaw_tab)),
+        (UCD_eawn, len(eawn_tab)),
         (UCD_rads, len(rads_tab)),
         (UCD_inmc, len(inmc_tab)),
+        (UCD_imcn, len(imcn_tab)),
         (UCD_insc, len(insc_tab)),
+        (UCD_iscn, len(iscn_tab)),
         (UCD_prmc, len(prmc_tab)),
         ]
 
@@ -2191,11 +2507,11 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
                 raise KeyError('Cannot find property %s' % '/'.join(prop))
             else:
                 continue
-                        
+
         tbl = gen_binprop_table(bp)
         tables.append((fourcc(tsym), len(tbl)))
         extra_tables.append(tbl)
-        
+
     print('\nTable usage\n===========')
 
     total = 0
@@ -2206,7 +2522,7 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
     print('-----------')
     print('total %s bytes' % total)
     print('===========\n')
-    
+
     with open(output_path, 'wb') as out:
         # Write the header
         out.write(struct.pack(b'=IIII', UCD_MAGIC,
@@ -2223,7 +2539,7 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
 
         # Write the block table
         out.write(blok_tab)
-        
+
         # Write the name table
         out.write(name_tab)
 
@@ -2232,10 +2548,10 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
 
         # Write the ISO Comment table
         out.write(isoc_tab)
-        
+
         # Write the alias table
         out.write(alis_tab)
-        
+
         # Write the strings table
         out.write(strings_tab)
 
@@ -2244,7 +2560,8 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
         for first,category in catranges:
             out.write(struct.pack(b'=IH', first, twocc(category)))
         out.write(struct.pack(b'=IH', 0x110000, twocc('Cn'))) # Sentinel
-        
+        out.write(gcn_tab)
+
         # Write the case tables
         out.write(ucase_tab)
         out.write(lcase_tab)
@@ -2252,28 +2569,33 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
         out.write(csef_tab)
         out.write(nfkc_cf_tab)
         out.write(nfkc_clo_tab)
-        
+
         # Write the ccc table
         out.write(ccc_tab)
-        
+        out.write(cccn_tab)
+
         # Write the jamo table
         out.write(jamo_tab)
+        out.write(jamn_tab)
 
         # Write the numb table
         out.write(numb_tab)
-        
+        out.write(numn_tab)
+
         # Write the bidi table
         out.write(bidi_tab)
+        out.write(bdin_tab)
 
         # Write the deco table
         out.write(deco_tab)
+        out.write(decn_tab)
 
         # Write the mirr table
         out.write(mirr_tab)
 
         # Write the brak table
         out.write(brak_tab)
-        
+
         # Write the age table
         out.write(age_tab)
 
@@ -2289,26 +2611,34 @@ def build_data(version, ucd_path, emoji_version, emoji_path, output_path):
 
         # And the joining table
         out.write(join_tab)
+        out.write(jonn_tab)
 
         # Breaking
         out.write(lbrk_tab)
+        out.write(lbkn_tab)
         out.write(gbrk_tab)
+        out.write(gbkn_tab)
         out.write(sbrk_tab)
+        out.write(sbkn_tab)
         out.write(wbrk_tab)
+        out.write(wbkn_tab)
 
         # East Asian Width
         out.write(eaw_tab)
+        out.write(eawn_tab)
 
         # Unicode_Radical_Stroke
         out.write(rads_tab)
 
         # Indic Matra/Syllabic Categories
         out.write(inmc_tab)
+        out.write(imcn_tab)
         out.write(insc_tab)
+        out.write(iscn_tab)
 
         # Primary Composition table
         out.write(prmc_tab)
-        
+
         # Write the binary property tables
         for tbl in extra_tables:
             out.write(tbl)

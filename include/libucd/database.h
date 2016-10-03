@@ -37,6 +37,47 @@ namespace ucd {
     version unicode_version() const;
     version emoji_version() const;
 
+    // Value name conversions
+    bool hangul_syllable_type_from_name(const std::string &name, hst &hst) const;
+    std::string name_from_hangul_syllable_type(hst h) const;
+    bool general_category_from_name(const std::string &name, gc &gc) const;
+    std::string name_from_general_category(gc c) const;
+    bool canonical_combining_class_from_name(const std::string &name,
+                                             ccc &ccc) const;
+    std::string name_from_canonical_combining_class(ccc c) const;
+    bool numeric_type_from_name(const std::string &name, nt &nt) const;
+    std::string name_from_numeric_type(nt t) const;
+    bool bidi_class_from_name(const std::string &name, bc &bc) const;
+    std::string name_from_bidi_class(bc cls) const;
+    bool bidi_paired_bracket_type_from_name(const std::string &name,
+                                            bpt &bpt) const;
+    std::string name_from_bidi_paired_bracket_type(bpt t) const;
+    bool decomposition_type_from_name(const std::string &name, dt &dt) const;
+    std::string name_from_decomposition_type(dt t) const;
+    bool script_from_name(const std::string &name, sc &script) const;
+    std::string name_from_script(sc script) const;
+    bool east_asian_width_from_name(const std::string &name, ea &eaw) const;
+    std::string name_from_east_asian_width(ea eaw) const;
+    bool indic_positional_category_from_name(const std::string &name,
+                                             InPC &inpc) const;
+    std::string name_from_indic_positional_category(InPC inpc) const;
+    bool indic_syllabic_category_from_name(const std::string &name,
+                                           InSC &insc) const;
+    std::string name_from_indic_syllabic_category(InSC insc) const;
+    bool joining_type_from_name(const std::string &name, jt &jt) const;
+    std::string name_from_joining_type(jt t) const;
+    bool joining_group_from_name(const std::string &name, jg &jg) const;
+    std::string name_from_joining_group(jg g) const;
+    bool line_break_from_name(const std::string &name, lb &lb) const;
+    std::string name_from_line_break(lb b) const;
+    bool grapheme_cluster_break_from_name(const std::string &name,
+                                          GCB &gcb) const;
+    std::string name_from_grapheme_cluster_break(GCB gcb) const;
+    bool sentence_break_from_name(const std::string &name, SB &sb) const;
+    std::string name_from_sentence_break(SB sb) const;
+    bool word_break_from_name(const std::string &name, WB &wb) const;
+    std::string name_from_word_break(WB wb) const;
+
     /* This method does lookups based on Name and Name_Alias; it does not
        and will not use Unicode_1_Name. */
     codepoint codepoint_from_name(const std::string &name,
@@ -64,6 +105,7 @@ namespace ucd {
     const class block *block(codepoint cp) const;
     const class block *block_from_name(const std::string &name) const;
     const std::vector<class block> &blocks() const;
+
 
     /* These unify Simple_Uppercase_Mapping with Uppercase_Mapping, etc.
        If you need Simple_Uppercase_Mapping specifically, just check if
@@ -107,9 +149,6 @@ namespace ucd {
     version age(codepoint cp) const;
     sc script(codepoint cp) const;
     std::vector<sc> script_extensions(codepoint cp) const;
-
-    sc script_from_name(const std::string &name) const;
-    std::string name_from_script(sc script) const;
 
     ea east_asian_width(codepoint cp) const;
     stroke_count unicode_radical_stroke(codepoint cp) const;
