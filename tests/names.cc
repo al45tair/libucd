@@ -12,44 +12,47 @@ TEST_CASE("we can map names to code points", "[names]") {
     REQUIRE(db.codepoint_from_name("<<<not a real name>>>") == bad_codepoint);
     // U+XXXX, U+XXXXX syntax
     REQUIRE(db.codepoint_from_name("U+0001f600") == bad_codepoint);
-    REQUIRE(db.codepoint_from_name("U+1f600") == 0x1f600);
-    REQUIRE(db.codepoint_from_name("U+20A3") == 0x20a3);
+    REQUIRE(db.codepoint_from_name("U+1f600") == 0x1f600u);
+    REQUIRE(db.codepoint_from_name("U+20A3") == 0x20a3u);
     REQUIRE(db.codepoint_from_name("U+41") == bad_codepoint);
-    REQUIRE(db.codepoint_from_name("U+0041") == 0x0041);
+    REQUIRE(db.codepoint_from_name("U+0041") == 0x0041u);
 
     // CJK UNIFIED IDEOGRAPH+ syntax
-    REQUIRE(db.codepoint_from_name("CJK UNIFIED IDEOGRAPH-3433") == 0x3433);
-    REQUIRE(db.codepoint_from_name("CJK UNIFIED IDEOGRAPH-4EE8") == 0x4ee8);
+    REQUIRE(db.codepoint_from_name("CJK UNIFIED IDEOGRAPH-3433") == 0x3433u);
+    REQUIRE(db.codepoint_from_name("CJK UNIFIED IDEOGRAPH-4EE8") == 0x4ee8u);
 
     // CJK COMPATIBILITY IDEOGRAPH+ syntax
-    REQUIRE(db.codepoint_from_name("CJK COMPATIBILITY IDEOGRAPH-F947") == 0xf947);
-    REQUIRE(db.codepoint_from_name("CJK COMPATIBILITY IDEOGRAPH-F91D") == 0xf91D);
+    REQUIRE(db.codepoint_from_name("CJK COMPATIBILITY IDEOGRAPH-F947")
+            == 0xf947u);
+    REQUIRE(db.codepoint_from_name("CJK COMPATIBILITY IDEOGRAPH-F91D") 
+            == 0xf91du);
 
     // HANGUL SYLLABLE syntax
-    REQUIRE(db.codepoint_from_name("HANGUL SYLLABLE GANG") == 0xac15);
-    REQUIRE(db.codepoint_from_name("HANGUL SYLLABLE GYEON") == 0xacac);
-    REQUIRE(db.codepoint_from_name("HANGUL SYLLABLE BBWAE") == 0xbf78);
+    REQUIRE(db.codepoint_from_name("HANGUL SYLLABLE GANG") == 0xac15u);
+    REQUIRE(db.codepoint_from_name("HANGUL SYLLABLE GYEON") == 0xacacu);
+    REQUIRE(db.codepoint_from_name("HANGUL SYLLABLE BBWAE") == 0xbf78u);
 
     // Proper names
-    REQUIRE(db.codepoint_from_name("GRINNING FACE") == 0x1f600);
-    REQUIRE(db.codepoint_from_name("FRENCH FRANC SIGN") == 0x20a3);
-    REQUIRE(db.codepoint_from_name("LATIN CAPITAL LETTER A") == 0x0041);
+    REQUIRE(db.codepoint_from_name("GRINNING FACE") == 0x1f600u);
+    REQUIRE(db.codepoint_from_name("FRENCH FRANC SIGN") == 0x20a3u);
+    REQUIRE(db.codepoint_from_name("LATIN CAPITAL LETTER A") == 0x0041u);
 
     // Should be case insensitive
-    REQUIRE(db.codepoint_from_name("grinning FACE") == 0x1f600);
-    REQUIRE(db.codepoint_from_name("FRENCH franc SIGN") == 0x20a3);
-    REQUIRE(db.codepoint_from_name("LATIN CAPITAL letter A") == 0x0041);
+    REQUIRE(db.codepoint_from_name("grinning FACE") == 0x1f600u);
+    REQUIRE(db.codepoint_from_name("FRENCH franc SIGN") == 0x20a3u);
+    REQUIRE(db.codepoint_from_name("LATIN CAPITAL letter A") == 0x0041u);
 
     // Should ignore whitespace
-    REQUIRE(db.codepoint_from_name("zerowidthspace") == 0x200b);
-    REQUIRE(db.codepoint_from_name("RIGHTWARDSarrowWITHCornerDownwards") == 0x21b4);
+    REQUIRE(db.codepoint_from_name("zerowidthspace") == 0x200bu);
+    REQUIRE(db.codepoint_from_name("RIGHTWARDSarrowWITHCornerDownwards")
+            == 0x21b4u);
 
     // Should ignore medial hyphens, except for U+1180 because of U+116c
-    REQUIRE(db.codepoint_from_name("Linear B Ideogram B107M hegoat") == 0x10089);
-    REQUIRE(db.codepoint_from_name("hangul jungseong oe") == 0x116c);
-    REQUIRE(db.codepoint_from_name("hangul jungseong o-e") == 0x1180);
-    REQUIRE(db.codepoint_from_name("TIBETAN MARK TSA -PHRU") == 0x0f39);
-    REQUIRE(db.codepoint_from_name("alchemical symbol for borax 3") == 0x1f744);
+    REQUIRE(db.codepoint_from_name("Linear B Ideogram B107M hegoat") == 0x10089u);
+    REQUIRE(db.codepoint_from_name("hangul jungseong oe") == 0x116cu);
+    REQUIRE(db.codepoint_from_name("hangul jungseong o-e") == 0x1180u);
+    REQUIRE(db.codepoint_from_name("TIBETAN MARK TSA -PHRU") == 0x0f39u);
+    REQUIRE(db.codepoint_from_name("alchemical symbol for borax 3") == 0x1f744u);
   }
 
   SECTION("mapping code points to names") {
@@ -85,16 +88,16 @@ TEST_CASE("aliases work", "[alias]") {
   db.open("ucd/packed/unicode-9.0.0.ucd");
 
   SECTION("mapping names to code points") {
-    REQUIRE(db.codepoint_from_name("NUL") == 0x0000);
-    REQUIRE(db.codepoint_from_name("LATIN CAPITAL LETTER GHA") == 0x01a2);
-    REQUIRE(db.codepoint_from_name("WEIERSTRASS ELLIPTIC FUNCTION") == 0x2118);
+    REQUIRE(db.codepoint_from_name("NUL") == 0x0000u);
+    REQUIRE(db.codepoint_from_name("LATIN CAPITAL LETTER GHA") == 0x01a2u);
+    REQUIRE(db.codepoint_from_name("WEIERSTRASS ELLIPTIC FUNCTION") == 0x2118u);
 
-    REQUIRE(db.codepoint_from_name("STX", Alias_Type::abbreviation) == 0x02);
+    REQUIRE(db.codepoint_from_name("STX", Alias_Type::abbreviation) == 0x02u);
     REQUIRE(db.codepoint_from_name("STX", Alias_Type::none) == bad_codepoint);
     REQUIRE(db.codepoint_from_name("START OF TEXT",
                                    Alias_Type::abbreviation
                                    | Alias_Type::control
-                                   | Alias_Type::alternate) == 0x02);
+                                   | Alias_Type::alternate) == 0x02u);
     REQUIRE(db.codepoint_from_name("STX", Alias_Type::correction)
             == bad_codepoint);
   }

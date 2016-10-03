@@ -25,6 +25,8 @@ namespace ucd {
       simplified = 1
     } simplified_t;
 
+    stroke_count() : _radical(0), _simplified(false), _additional_strokes(0) {}
+
     stroke_count(unsigned r, simplified_t s, int a)
       : _radical(r), _simplified(s == simplified), _additional_strokes(a) {}
 

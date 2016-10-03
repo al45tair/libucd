@@ -52,8 +52,8 @@ TEST_CASE("we can obtain the Bidi_Mirroring_Glyph property", "[bidi-mglyph]") {
   REQUIRE(db.bidi_mirroring_glyph('(') == codepoint(')'));
   REQUIRE(db.bidi_mirroring_glyph(')') == codepoint('('));
   REQUIRE(db.bidi_mirroring_glyph('A') == bad_codepoint);
-  REQUIRE(db.bidi_mirroring_glyph(0x220b) == 0x2208);
-  REQUIRE(db.bidi_mirroring_glyph(0x2208) == 0x220b);
+  REQUIRE(db.bidi_mirroring_glyph(0x220b) == char32_t(0x2208));
+  REQUIRE(db.bidi_mirroring_glyph(0x2208) == char32_t(0x220b));
   REQUIRE(db.bidi_mirroring_glyph(0x1d789) == bad_codepoint);
 }
 
@@ -73,9 +73,9 @@ TEST_CASE("we can read the Bidi_Paired_Bracket property", "[bidi-brak]") {
   REQUIRE(db.bidi_paired_bracket('A', type) == bad_codepoint);
   REQUIRE(type == Bidi_Paired_Bracket_Type::None);
 
-  REQUIRE(db.bidi_paired_bracket(0x27ee, type) == 0x27ef);
+  REQUIRE(db.bidi_paired_bracket(0x27ee, type) == char32_t(0x27ef));
   REQUIRE(type == Bidi_Paired_Bracket_Type::Open);
 
-  REQUIRE(db.bidi_paired_bracket(0x27ef, type) == 0x27ee);
+  REQUIRE(db.bidi_paired_bracket(0x27ef, type) == char32_t(0x27ee));
   REQUIRE(type == Bidi_Paired_Bracket_Type::Close);
 }

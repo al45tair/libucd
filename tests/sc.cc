@@ -32,20 +32,27 @@ TEST_CASE("we can look up scripts by name", "[sc-lookup]") {
 
   db.open("ucd/packed/unicode-9.0.0.ucd");
 
-  REQUIRE(db.script_from_name("egyptian hieroglyphs") == Script::Egyp);
-  REQUIRE(db.script_from_name("oldturkic") == Script::Orkh);
-  REQUIRE(db.script_from_name("uGaRiTiC") == Script::Ugar);
+  sc script;
+
+  REQUIRE(db.script_from_name("egyptian hieroglyphs", script));
+  REQUIRE(script == Script::Egyp);
+  REQUIRE(db.script_from_name("oldturkic", script));
+  REQUIRE(script == Script::Orkh);
+  REQUIRE(db.script_from_name("uGaRiTiC", script));
+  REQUIRE(script == Script::Ugar);
 
   // FourCCs go straight through
-  REQUIRE(db.script_from_name("four") == 'Four');
+  REQUIRE(db.script_from_name("four", script));
+  REQUIRE(script == 'Four');
 
   // Except for Qaai and Qaac
-  REQUIRE(db.script_from_name("qaai") == 'Zinh');
-  REQUIRE(db.script_from_name("qAaC") == 'Copt');
+  REQUIRE(db.script_from_name("qaai", script));
+  REQUIRE(script == 'Zinh');
+  REQUIRE(db.script_from_name("qAaC", script));
+  REQUIRE(script == 'Copt');
 
   // Other unknown names return bad_script
-  REQUIRE(db.script_from_name("The Hitchhiker's Guide to the Galaxy")
-          == Script::bad_script);
+  REQUIRE(!db.script_from_name("The Hitchhiker's Guide to the Galaxy", script));
 }
 
 TEST_CASE("we can get Script_Extensions information", "[sext]") {

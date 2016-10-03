@@ -13,7 +13,7 @@
 
 namespace ucd {
 
-  typedef uint32_t codepoint;
+  typedef char32_t codepoint;
   typedef uint16_t gc;
   typedef uint8_t  ccc;
 
@@ -189,11 +189,11 @@ namespace ucd {
   // Canonical_Combining_Class values
   namespace Canonical_Combining_Class {
     enum {
-      Not_Reordered = 0,
-      Overlay = 1,
-      Nukta = 7,
-      Kana_Voicing = 8,
-      Virama = 9,
+      Not_Reordered = 0, NR = Not_Reordered,
+      Overlay = 1,       OV = Overlay,
+      Nukta = 7,         NK = Nukta,
+      Kana_Voicing = 8,  KV = Kana_Voicing,
+      Virama = 9,        VR = Virama,
       CCC10 = 10,
       CCC11 = 11,
       CCC12 = 12,
@@ -384,21 +384,21 @@ namespace ucd {
       CCC197 = 197,
       CCC198 = 198,
       CCC199 = 199,
-      Attached_Below_Left = 200,
-      Attached_Below = 202,
-      Attached_Above = 214,
-      Attached_Above_Right = 216,
-      Below_Left = 218,
-      Below = 220,
-      Below_Right = 222,
-      Left = 224,
-      Right = 226,
-      Above_Left = 228,
-      Above = 230,
-      Above_Right = 232,
-      Double_Below = 233,
-      Double_Above = 234,
-      Iota_Subscript = 240,
+      Attached_Below_Left = 200,        ATBL = Attached_Below_Left,
+      Attached_Below = 202,             ATB = Attached_Below,
+      Attached_Above = 214,             ATA = Attached_Above,
+      Attached_Above_Right = 216,       ATAR = Attached_Above_Right,
+      Below_Left = 218,                 BL = Below_Left,
+      Below = 220,                      B = Below,
+      Below_Right = 222,                BR = Below_Right,
+      Left = 224,                       L = Left,
+      Right = 226,                      R = Right,
+      Above_Left = 228,                 AL = Above_Left,
+      Above = 230,                      A = Above,
+      Above_Right = 232,                AR = Above_Right,
+      Double_Below = 233,               DB = Double_Below,
+      Double_Above = 234,               DA = Double_Above,
+      Iota_Subscript = 240,             IS = Iota_Subscript
     };
   };
 
@@ -423,9 +423,9 @@ namespace ucd {
   // Numeric_Type values
   enum class Numeric_Type {
     None = 0,
-    Decimal = 1,
-    Digit = 2,
-    Numeric = 3,
+    Decimal = 1, De = Decimal,
+    Digit = 2,   Di = Digit,
+    Numeric = 3, Nu = Numeric,
   };
 
   // Bidi_Class values
